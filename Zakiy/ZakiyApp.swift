@@ -166,7 +166,7 @@ struct HomeView: View {
         ScreenBackground {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    HStack { BrandMark(size: 34); Spacer() }
+                    HStack { BrandMark(size: 92); Spacer() }
                     Text("أهلًا، \(app.username.isEmpty ? "طالب" : app.username)")
                         .font(.title.bold())
                     Text("وش تبغى تبدأ اليوم؟").foregroundStyle(.secondary)
