@@ -115,12 +115,10 @@ struct WelcomeView: View {
 struct BrandMark: View {
     var size: CGFloat = 42
     var body: some View {
-        VStack(spacing: 7) {
-            Text("ذكيّ")
-                .font(.system(size: size, weight: .black, design: .rounded))
-                .foregroundStyle(Theme.navy)
-            Capsule().fill(Theme.gold).frame(width: size * 1.4, height: max(5, size * 0.08))
-        }
+        Image("AppLogo")
+            .resizable()
+            .scaledToFit()
+            .frame(width: size * 2.2, height: size * 1.65)
         .accessibilityLabel("ذكيّ")
     }
 }
