@@ -7,6 +7,12 @@ struct PerformanceDashboardView: View {
     @State private var data: PerformanceData?
     @State private var isLoading = true
 
+    private var averageScore: Double {
+        guard let attempts = data?.attempts, !attempts.isEmpty else { return 0 }
+        let percentages = attempts.map { $0.total > 0 ? Double($0.score) / Double($0.total) * 100 : 0 }
+        return percentages.reduce(0, +) / Double(percentages.count)
+    }
+
     var body: some View {
         Group {
             if !auth.isAuthenticated {
@@ -15,36 +21,36 @@ struct PerformanceDashboardView: View {
             } else if isLoading {
                 ProgressView(Loc.t("loading"))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let data {
+            } else if let data, !data.attempts.isEmpty {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         summaryRow(data)
 
-                        if !data.attempts.isEmpty {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text(Loc.t("progress_over_time")).font(.headline)
-                                Chart(data.attempts) { attempt in
-                                    LineMark(
-                                        x: .value(Loc.t("date"), attempt.date),
-                                        y: .value(Loc.t("score_percent"), attempt.percentage)
-                                    )
-                                    .foregroundStyle(Color.accentColor)
-                                    .symbol(Circle())
-                                }
-                                .frame(height: 200)
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(Loc.t("progress_over_time")).font(.headline)
+                            Chart(Array(data.attempts.enumerated()), id: \.offset) { index, attempt in
+                                let percentage = attempt.total > 0 ? Double(attempt.score) / Double(attempt.total) * 100 : 0
+                                LineMark(
+                                    x: .value(Loc.t("date"), index),
+                                    y: .value(Loc.t("score_percent"), percentage)
+                                )
+                                .foregroundStyle(Color.accentColor)
+                                .symbol(Circle())
                             }
-                            .padding()
-                            .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
+                            .chartXAxis(.hidden)
+                            .frame(height: 200)
                         }
+                        .padding()
+                        .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
 
                         if !data.weakTopics.isEmpty {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(Loc.t("weak_topics")).font(.headline)
                                 ForEach(data.weakTopics) { topic in
                                     HStack {
-                                        Text(topic.name)
+                                        Text(topic.topic)
                                         Spacer()
-                                        Text("\(topic.missCount)×").foregroundStyle(.secondary)
+                                        Text("\(topic.count)×").foregroundStyle(.secondary)
                                     }
                                     .font(.subheadline)
                                     .padding(.vertical, 4)
@@ -68,9 +74,11 @@ struct PerformanceDashboardView: View {
     }
 
     private func summaryRow(_ data: PerformanceData) -> some View {
-        HStack(spacing: 12) {
-            statCard(title: Loc.t("total_attempts"), value: "\(data.totalAttempts)")
-            statCard(title: Loc.t("average_score"), value: String(format: "%.0f%%", data.averageScore))
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            statCard(title: Loc.t("total_attempts"), value: "\(data.attempts.count)")
+            statCard(title: Loc.t("average_score"), value: String(format: "%.0f%%", averageScore))
+            statCard(title: Loc.t("current_streak"), value: "\(data.currentStreak)")
+            statCard(title: Loc.t("longest_streak"), value: "\(data.longestStreak)")
         }
     }
 
@@ -87,7 +95,7 @@ struct PerformanceDashboardView: View {
     private func load() async {
         guard auth.isAuthenticated else { isLoading = false; return }
         isLoading = true
-        data = try? await APIClient.shared.performanceData()
+        data = try? await APIClient.shared.performance()
         isLoading = false
     }
 }

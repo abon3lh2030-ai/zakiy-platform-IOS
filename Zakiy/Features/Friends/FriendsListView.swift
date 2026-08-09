@@ -4,12 +4,12 @@ struct FriendsListView: View {
     @Environment(SupabaseAuthManager.self) private var auth
 
     @State private var friends: [Friend] = []
-    @State private var requests: [FriendRequest] = []
+    @State private var incomingRequests: [FriendRequest] = []
     @State private var isLoading = true
     @State private var showMyQR = false
     @State private var showScanner = false
     @State private var searchText = ""
-    @State private var searchResults: [UserProfile] = []
+    @State private var searchResults: [Friend] = []
     @State private var isSearching = false
     @State private var errorMessage: String?
 
@@ -47,9 +47,9 @@ struct FriendsListView: View {
                         }
                     }
 
-                    if !requests.isEmpty {
+                    if !incomingRequests.isEmpty {
                         Section(Loc.t("friend_requests")) {
-                            ForEach(requests) { req in
+                            ForEach(incomingRequests) { req in
                                 HStack {
                                     Text(req.username)
                                     Spacer()
@@ -75,7 +75,7 @@ struct FriendsListView: View {
                         } else {
                             ForEach(friends) { friend in
                                 NavigationLink {
-                                    ProfileView(userId: friend.id)
+                                    ProfileView(userId: friend.userId)
                                 } label: {
                                     Text(friend.username)
                                 }
@@ -116,10 +116,10 @@ struct FriendsListView: View {
     private func load() async {
         guard auth.isAuthenticated else { isLoading = false; return }
         isLoading = true
-        async let f = APIClient.shared.friendsList()
+        async let f = APIClient.shared.friends()
         async let r = APIClient.shared.friendRequests()
         friends = (try? await f) ?? []
-        requests = (try? await r) ?? []
+        incomingRequests = (try? await r)?.incoming ?? []
         isLoading = false
     }
 
@@ -127,13 +127,13 @@ struct FriendsListView: View {
         let query = searchText.trimmingCharacters(in: .whitespaces)
         guard !query.isEmpty else { searchResults = []; return }
         isSearching = true
-        searchResults = (try? await APIClient.shared.searchUsers(query: query)) ?? []
+        searchResults = (try? await APIClient.shared.searchFriends(query: query)) ?? []
         isSearching = false
     }
 
-    private func sendRequest(to user: UserProfile) async {
+    private func sendRequest(to user: Friend) async {
         do {
-            try await APIClient.shared.sendFriendRequest(userId: user.id)
+            try await APIClient.shared.sendFriendRequest(toUserId: user.userId)
             searchResults.removeAll { $0.id == user.id }
         } catch {
             errorMessage = Loc.t("error_generic")
@@ -141,8 +141,12 @@ struct FriendsListView: View {
     }
 
     private func respond(_ request: FriendRequest, accept: Bool) async {
-        requests.removeAll { $0.id == request.id }
-        try? await APIClient.shared.respondFriendRequest(id: request.id, accept: accept)
-        if accept { await load() }
+        incomingRequests.removeAll { $0.id == request.id }
+        if accept {
+            try? await APIClient.shared.acceptFriendRequest(requestId: request.id)
+            await load()
+        } else {
+            try? await APIClient.shared.rejectFriendRequest(requestId: request.id)
+        }
     }
 }

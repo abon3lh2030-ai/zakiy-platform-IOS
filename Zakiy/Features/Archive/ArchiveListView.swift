@@ -21,10 +21,15 @@ struct ArchiveListView: View {
                 List(items) { item in
                     Button { selected = item } label: {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(item.roomName).font(.headline)
+                            Text(item.hostName.map { String(format: Loc.t("session_hosted_by"), $0) } ?? item.roomCode ?? Loc.t("archive"))
+                                .font(.headline)
                             HStack(spacing: 8) {
-                                Label("\(item.score)/\(item.total)", systemImage: "checkmark.circle")
-                                Text(item.date, style: .date)
+                                if let mine = myParticipant(in: item) {
+                                    Label("\(mine.score ?? 0)/\(mine.total ?? 0)", systemImage: "checkmark.circle")
+                                }
+                                if let createdAt = item.createdAt {
+                                    Text(createdAt)
+                                }
                             }
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -45,10 +50,14 @@ struct ArchiveListView: View {
         }
     }
 
+    private func myParticipant(in item: SessionArchiveItem) -> ArchiveParticipant? {
+        item.participants?.first { $0.userId == auth.userId }
+    }
+
     private func load() async {
         guard auth.isAuthenticated else { isLoading = false; return }
         isLoading = true
-        items = (try? await APIClient.shared.sessionArchive()) ?? []
+        items = (try? await APIClient.shared.sessionsArchive()) ?? []
         isLoading = false
     }
 }

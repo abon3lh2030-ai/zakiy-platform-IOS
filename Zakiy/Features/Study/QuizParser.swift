@@ -1,7 +1,8 @@
 import Foundation
 
-/// Parses the raw markdown-ish quiz text returned by the backend AI generation endpoint into
-/// structured `QuizQuestion` values. The backend emits questions in the form:
+/// Parses the raw markdown-ish quiz text returned by the backend AI generation endpoint
+/// (`APIClient.generateQuizRaw`) into structured `QuizQuestion` values. The backend emits
+/// questions in the form:
 ///
 /// 1. Question text?
 /// أ) option one
@@ -32,7 +33,8 @@ enum QuizParser {
             }
 
             guard !options.isEmpty else { continue }
-            questions.append(QuizQuestion(question: questionText, options: options, correctIndex: min(correctIndex, options.count - 1)))
+            let safeIndex = min(correctIndex, options.count - 1)
+            questions.append(QuizQuestion(question: questionText, options: options, correctAnswer: options[safeIndex], topic: "", explanation: ""))
         }
 
         return questions

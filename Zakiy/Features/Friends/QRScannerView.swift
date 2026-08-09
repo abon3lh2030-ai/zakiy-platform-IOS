@@ -53,7 +53,7 @@ struct QRScannerView: View {
         Task {
             isSending = true
             do {
-                try await APIClient.shared.sendFriendRequest(userId: userId)
+                try await APIClient.shared.sendFriendRequest(toUserId: userId)
                 requestSent = true
             } catch {
                 errorMessage = Loc.t("error_generic")

@@ -3,6 +3,8 @@ import SwiftUI
 struct QuizView: View {
     let sourceText: String
 
+    @Environment(AppSettings.self) private var settings
+
     @State private var questions: [QuizQuestion] = []
     @State private var isLoading = true
     @State private var currentIndex = 0
@@ -30,7 +32,7 @@ struct QuizView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             startedAt = Date()
-            let raw = (try? await APIClient.shared.generateQuiz(sourceText: sourceText)) ?? ""
+            let raw = (try? await APIClient.shared.generateQuizRaw(text: sourceText, numQuestions: 10, lang: settings.languageCode)) ?? ""
             questions = QuizParser.parse(raw)
             isLoading = false
         }
@@ -96,7 +98,8 @@ struct QuizView: View {
 
     private func submitAnswer(for question: QuizQuestion) {
         guard let selectedOption else { return }
-        if selectedOption == question.correctIndex {
+        let chosenText = question.options[selectedOption]
+        if chosenText == question.correctAnswer {
             score += 1
         } else {
             wrongTopics.append(question.question)

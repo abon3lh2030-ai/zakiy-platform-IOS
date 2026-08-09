@@ -63,7 +63,10 @@ struct ChatAssistantView: View {
         messages.append(ChatMessage(role: .user, text: text))
         isSending = true
         do {
-            let reply = try await APIClient.shared.chatAsk(context: sourceText, question: text, history: messages)
+            let history: [[String: String]] = messages.dropLast().map {
+                ["role": $0.role == .user ? "user" : "assistant", "content": $0.text]
+            }
+            let reply = try await APIClient.shared.chat(text: sourceText, question: text, history: history)
             messages.append(ChatMessage(role: .assistant, text: reply))
         } catch {
             messages.append(ChatMessage(role: .assistant, text: Loc.t("error_generic")))

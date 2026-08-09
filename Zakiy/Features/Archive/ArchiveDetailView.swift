@@ -3,33 +3,28 @@ import SwiftUI
 struct ArchiveDetailView: View {
     let item: SessionArchiveItem
 
-    @State private var participants: [ArchiveParticipant] = []
-    @State private var isLoading = true
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(item.roomName).font(.title2.bold())
-                    Text(item.date, style: .date).font(.subheadline).foregroundStyle(.secondary)
-                    Label("\(Loc.t("your_score")): \(item.score)/\(item.total)", systemImage: "checkmark.seal.fill")
-                        .foregroundStyle(.accentColor)
-                        .font(.headline)
+                    Text(item.hostName.map { String(format: Loc.t("session_hosted_by"), $0) } ?? item.roomCode ?? Loc.t("archive"))
+                        .font(.title2.bold())
+                    if let createdAt = item.createdAt {
+                        Text(createdAt).font(.subheadline).foregroundStyle(.secondary)
+                    }
                 }
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
 
-                if isLoading {
-                    ProgressView().frame(maxWidth: .infinity).padding(.top, 20)
-                } else if !participants.isEmpty {
+                if let participants = item.participants, !participants.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(Loc.t("participants")).font(.headline)
-                        ForEach(participants) { p in
+                        ForEach(Array(participants.enumerated()), id: \.offset) { _, p in
                             HStack {
-                                Text(p.username)
+                                Text(p.name ?? Loc.t("default_student_name"))
                                 Spacer()
-                                Text("\(p.score)/\(p.total)")
+                                Text("\(p.score ?? 0)/\(p.total ?? 0)")
                                     .foregroundStyle(.secondary)
                             }
                             .font(.subheadline)
@@ -46,9 +41,5 @@ struct ArchiveDetailView: View {
         .background(Color.appBackground)
         .navigationTitle(Loc.t("archive"))
         .navigationBarTitleDisplayMode(.inline)
-        .task {
-            participants = (try? await APIClient.shared.sessionArchiveParticipants(sessionId: item.id)) ?? []
-            isLoading = false
-        }
     }
 }
