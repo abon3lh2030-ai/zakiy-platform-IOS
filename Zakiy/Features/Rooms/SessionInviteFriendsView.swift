@@ -26,7 +26,7 @@ struct SessionInviteFriendsView: View {
                         Spacer()
                         if sentTo.contains(friend.userId) {
                             Label(Loc.t("invited"), systemImage: "checkmark.circle.fill")
-                                .foregroundStyle(.accentColor)
+                                .foregroundStyle(Color.accentColor)
                                 .labelStyle(.iconOnly)
                         } else if sendingTo == friend.userId {
                             ProgressView().controlSize(.small)

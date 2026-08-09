@@ -2,7 +2,7 @@ import Foundation
 
 enum Loc {
     static func t(_ key: String) -> String {
-        let lang = AppSettings.shared.languageCode
+        let lang = AppSettings.currentLanguageCode
         return (lang == "ar" ? ar[key] : en[key]) ?? key
     }
 

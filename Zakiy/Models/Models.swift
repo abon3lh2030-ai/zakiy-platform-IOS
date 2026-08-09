@@ -208,7 +208,7 @@ struct ProfileFriendsSummary: Decodable {
     let list: [Friend]
 }
 
-struct SessionArchiveItem: Identifiable, Codable, Equatable {
+struct SessionArchiveItem: Identifiable, Codable, Hashable {
     let id: String
     let roomCode: String?
     let roomType: String?
@@ -251,7 +251,7 @@ struct SessionArchiveItem: Identifiable, Codable, Equatable {
     }
 }
 
-struct ArchiveParticipant: Codable, Equatable {
+struct ArchiveParticipant: Codable, Hashable {
     let name: String?
     let userId: String?
     let score: Int?

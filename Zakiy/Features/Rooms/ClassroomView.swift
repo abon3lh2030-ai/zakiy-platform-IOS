@@ -115,7 +115,7 @@ private struct ClassroomChatSheet: View {
                         LazyVStack(alignment: .leading, spacing: 10) {
                             ForEach(socket.chatMessages) { message in
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(message.name).font(.caption.bold()).foregroundStyle(.accentColor)
+                                    Text(message.name).font(.caption.bold()).foregroundStyle(Color.accentColor)
                                     Text(message.message).font(.subheadline)
                                 }
                                 .id(message.id)
@@ -168,7 +168,7 @@ private struct ClassroomParticipantsSheet: View {
                         .foregroundStyle(.secondary)
                     Text(participant.name)
                     if participant.isCoHost {
-                        Image(systemName: "star.fill").font(.caption2).foregroundStyle(.accentColor)
+                        Image(systemName: "star.fill").font(.caption2).foregroundStyle(Color.accentColor)
                     }
                     Spacer()
                 }

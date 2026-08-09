@@ -227,11 +227,11 @@ final class APIClient {
         try await sendVoid(request)
     }
 
-    func createRoom(roomType: String) async throws -> (code: String) {
+    func createRoom(roomType: String) async throws -> String {
         var request = authorizedRequest("/api/rooms", method: "POST")
         jsonBody(&request, ["room_type": roomType])
         struct Response: Decodable { let code: String }
         let result: Response = try await send(request)
-        return (result.code)
+        return result.code
     }
 }

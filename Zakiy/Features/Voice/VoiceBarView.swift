@@ -42,7 +42,7 @@ struct VoiceBarView: View {
                             VStack(spacing: 2) {
                                 Image(systemName: "person.crop.circle.fill")
                                     .font(.title3)
-                                    .foregroundStyle(.accentColor)
+                                    .foregroundStyle(Color.accentColor)
                                 Text(participant.name)
                                     .font(.caption2)
                                     .lineLimit(1)

@@ -24,7 +24,7 @@ struct RoomManagementPanel: View {
                             HStack {
                                 Text(participant.name).font(.subheadline.bold())
                                 if participant.isCoHost {
-                                    Text(Loc.t("co_host_badge")).font(.caption2).foregroundStyle(.accentColor)
+                                    Text(Loc.t("co_host_badge")).font(.caption2).foregroundStyle(Color.accentColor)
                                 }
                             }
 

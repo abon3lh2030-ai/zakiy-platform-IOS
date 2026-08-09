@@ -64,7 +64,7 @@ struct ProfileView: View {
                         } else if profile.friendStatus == "pending" {
                             Text(Loc.t("friend_request_sent")).foregroundStyle(.secondary)
                         } else if profile.friendStatus == "friends" {
-                            Label(Loc.t("friends"), systemImage: "checkmark.circle.fill").foregroundStyle(.accentColor)
+                            Label(Loc.t("friends"), systemImage: "checkmark.circle.fill").foregroundStyle(Color.accentColor)
                         }
                     }
                     .padding()
@@ -86,7 +86,7 @@ struct ProfileView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 84, height: 84)
-                .foregroundStyle(.accentColor)
+                .foregroundStyle(Color.accentColor)
             Text(profile.username).font(.title2.bold())
             if let bio = profile.bio, !bio.isEmpty {
                 Text(bio).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
@@ -108,7 +108,7 @@ struct ProfileView: View {
 
     private func statCard(title: String, value: String) -> some View {
         VStack(spacing: 6) {
-            Text(value).font(.title2.bold()).foregroundStyle(.accentColor)
+            Text(value).font(.title2.bold()).foregroundStyle(Color.accentColor)
             Text(title).font(.caption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)

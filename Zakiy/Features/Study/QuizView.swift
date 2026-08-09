@@ -87,7 +87,7 @@ struct QuizView: View {
             Spacer()
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 60))
-                .foregroundStyle(.accentColor)
+                .foregroundStyle(Color.accentColor)
             Text(String(format: Loc.t("your_score_format"), score, questions.count))
                 .font(.title.bold())
             Spacer()

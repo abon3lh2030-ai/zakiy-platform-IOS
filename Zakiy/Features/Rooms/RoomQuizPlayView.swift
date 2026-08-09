@@ -77,7 +77,7 @@ struct RoomQuizPlayView: View {
             VStack(spacing: 20) {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 50))
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                 Text(String(format: Loc.t("your_score_format"), score, questions.count))
                     .font(.title2.bold())
 

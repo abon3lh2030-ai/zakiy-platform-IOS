@@ -26,8 +26,15 @@ enum AppearanceMode: String, CaseIterable {
 final class AppSettings {
     static let shared = AppSettings()
 
+    /// Mirrors `languageCode` outside actor isolation so `Loc.t(_:)` can read it from any
+    /// context (including `nonisolated` protocol requirements like `LocalizedError.errorDescription`).
+    nonisolated(unsafe) static var currentLanguageCode = "ar"
+
     var languageCode: String {
-        didSet { UserDefaults.standard.set(languageCode, forKey: "zakiy.languageCode") }
+        didSet {
+            UserDefaults.standard.set(languageCode, forKey: "zakiy.languageCode")
+            Self.currentLanguageCode = languageCode
+        }
     }
     var appearanceMode: AppearanceMode {
         didSet { UserDefaults.standard.set(appearanceMode.rawValue, forKey: "zakiy.appearanceMode") }
@@ -43,7 +50,9 @@ final class AppSettings {
     var layoutDirection: LayoutDirection { languageCode == "ar" ? .rightToLeft : .leftToRight }
 
     private init() {
-        languageCode = UserDefaults.standard.string(forKey: "zakiy.languageCode") ?? "ar"
+        let savedLanguage = UserDefaults.standard.string(forKey: "zakiy.languageCode") ?? "ar"
+        languageCode = savedLanguage
+        Self.currentLanguageCode = savedLanguage
         let savedAppearance = UserDefaults.standard.string(forKey: "zakiy.appearanceMode") ?? AppearanceMode.system.rawValue
         appearanceMode = AppearanceMode(rawValue: savedAppearance) ?? .system
         isGuest = UserDefaults.standard.bool(forKey: "zakiy.isGuest")

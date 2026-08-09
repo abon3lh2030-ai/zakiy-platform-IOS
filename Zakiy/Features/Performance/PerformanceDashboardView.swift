@@ -84,7 +84,7 @@ struct PerformanceDashboardView: View {
 
     private func statCard(title: String, value: String) -> some View {
         VStack(spacing: 6) {
-            Text(value).font(.title2.bold()).foregroundStyle(.accentColor)
+            Text(value).font(.title2.bold()).foregroundStyle(Color.accentColor)
             Text(title).font(.caption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)

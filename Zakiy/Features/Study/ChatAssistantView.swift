@@ -45,7 +45,7 @@ struct ChatAssistantView: View {
                 } label: {
                     Image(systemName: "arrow.up.circle.fill")
                         .font(.title)
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                 }
                 .disabled(input.trimmingCharacters(in: .whitespaces).isEmpty || isSending)
             }

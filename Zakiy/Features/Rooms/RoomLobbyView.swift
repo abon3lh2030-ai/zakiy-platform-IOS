@@ -33,7 +33,7 @@ struct RoomLobbyView: View {
 
             Image(systemName: roomType == "classroom" ? "person.crop.rectangle.stack.fill" : "person.3.fill")
                 .font(.system(size: 50))
-                .foregroundStyle(.accentColor)
+                .foregroundStyle(Color.accentColor)
 
             Text(roomType == "classroom" ? Loc.t("room_type_classroom") : Loc.t("group_room"))
                 .font(.title2.bold())
@@ -82,9 +82,9 @@ struct RoomLobbyView: View {
         isCreating = true
         errorMessage = nil
         do {
-            let result = try await APIClient.shared.createRoom(roomType: roomType)
+            let code = try await APIClient.shared.createRoom(roomType: roomType)
             UsageLimiter.shared.recordUsage(limitedAction)
-            createdCode = CreatedRoomCode(code: result.code)
+            createdCode = CreatedRoomCode(code: code)
         } catch {
             errorMessage = Loc.t("error_generic")
         }
