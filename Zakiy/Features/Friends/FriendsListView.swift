@@ -139,6 +139,7 @@ struct FriendsListView: View {
                                     .onSubmit { Task { await search() } }
                                 Button(Loc.t("search")) { Task { await search() } }
                                     .buttonStyle(.bordered)
+                                    .tint(Color.appLinkText)
                                     .controlSize(.small)
                             }
 
@@ -154,6 +155,7 @@ struct FriendsListView: View {
                                                 Task { await sendRequest(to: user) }
                                             }
                                             .buttonStyle(.bordered)
+                                            .tint(Color.appLinkText)
                                             .controlSize(.small)
                                         }
                                         .frame(maxWidth: .infinity)
