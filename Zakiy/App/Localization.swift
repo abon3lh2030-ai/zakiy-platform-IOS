@@ -299,8 +299,8 @@ enum Loc {
     ]
 
     static let en: [String: String] = [
-        "app_name": "Zakiy",
-        "welcome_title": "Welcome to Zakiy",
+        "app_name": "zakiy",
+        "welcome_title": "Welcome to zakiy",
         "welcome_subtitle": "AI-assisted collaborative study platform",
         "login": "Login",
         "signup": "Sign Up",
@@ -327,7 +327,7 @@ enum Loc {
         "room_type_quiz": "Group Room",
         "summary": "Summary",
         "quiz": "Quiz",
-        "chat_assistant": "Ask Zakiy",
+        "chat_assistant": "Ask zakiy",
         "create_room": "Create Room",
         "join_room": "I Have a Code",
         "room_code": "Room Code",
@@ -439,7 +439,7 @@ enum Loc {
         "num_questions_label": "Questions: %d",
         "quiz_duration_label": "Duration: %d min",
         "invite_friends": "Invite Friends",
-        "share_room_invite_text": "Join my room on Zakiy! Code: %@",
+        "share_room_invite_text": "Join my room on zakiy! Code: %@",
         "room_code_label": "Room Code: %@",
         "participants_title": "Participants",
         "participants_section": "Participants",
@@ -491,7 +491,7 @@ enum Loc {
         "bio": "Bio",
         "bio_placeholder": "Write a short bio about yourself...",
         "chat": "Chat",
-        "chat_with_ai": "Ask Zakiy",
+        "chat_with_ai": "Ask zakiy",
         "chat_with_ai_subtitle": "Ask anything about the file",
         "close": "Close",
         "co_host_badge": "Co-Host",

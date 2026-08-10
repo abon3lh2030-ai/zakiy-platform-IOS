@@ -50,12 +50,23 @@ final class AppSettings {
     var layoutDirection: LayoutDirection { languageCode == "ar" ? .rightToLeft : .leftToRight }
 
     private init() {
-        let savedLanguage = UserDefaults.standard.string(forKey: "zakiy.languageCode") ?? "ar"
+        // Only fall back to the device's own language on first launch (no saved preference
+        // yet) — once the user has explicitly picked ar/en from Settings, that choice always
+        // wins over the phone's language.
+        let savedLanguage = UserDefaults.standard.string(forKey: "zakiy.languageCode") ?? Self.detectDeviceLanguageCode()
         languageCode = savedLanguage
         Self.currentLanguageCode = savedLanguage
         let savedAppearance = UserDefaults.standard.string(forKey: "zakiy.appearanceMode") ?? AppearanceMode.system.rawValue
         appearanceMode = AppearanceMode(rawValue: savedAppearance) ?? .system
         isGuest = UserDefaults.standard.bool(forKey: "zakiy.isGuest")
         guestName = UserDefaults.standard.string(forKey: "zakiy.guestName") ?? ""
+    }
+
+    /// Arabic if the phone's preferred language is Arabic (any region variant, e.g. "ar-SA"),
+    /// English for every other language — we only ship ar/en content, so anything else falls
+    /// back to English rather than silently defaulting to Arabic regardless of device language.
+    private static func detectDeviceLanguageCode() -> String {
+        let preferred = Locale.preferredLanguages.first ?? "en"
+        return preferred.hasPrefix("ar") ? "ar" : "en"
     }
 }
