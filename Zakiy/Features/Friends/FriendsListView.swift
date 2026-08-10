@@ -99,26 +99,28 @@ struct FriendsListView: View {
                                         // NavigationLink itself, not on the Text inside its
                                         // label — set on the inner Text, the link's own tint
                                         // silently overrides it and the name renders gold anyway.
-                                        //
-                                        // The bordered "حذف" pill is taller than plain text once
-                                        // its own internal padding is counted, so HStack's default
-                                        // center alignment still lines up their *frames* evenly
-                                        // but the name's baseline reads visually low next to the
-                                        // pill — pin the name to the same fixed row height instead.
                                         NavigationLink {
                                             ProfileView(userId: friend.userId)
                                         } label: {
                                             Text(friend.username)
                                         }
                                         .foregroundStyle(.primary)
-                                        .frame(height: 30)
                                         Spacer()
-                                        Button(Loc.t("delete"), role: .destructive) {
+                                        // A hand-sized pill, not .buttonStyle(.bordered) — the
+                                        // system bordered style carries its own large minimum tap
+                                        // padding that made the pill visibly bigger than the name
+                                        // text next to it no matter how the row was aligned.
+                                        Button(role: .destructive) {
                                             removeTarget = friend
+                                        } label: {
+                                            Text(Loc.t("delete"))
+                                                .font(.caption.weight(.semibold))
+                                                .foregroundStyle(.red)
+                                                .padding(.horizontal, 10)
+                                                .padding(.vertical, 5)
+                                                .background(Color.red.opacity(0.15), in: Capsule())
                                         }
-                                        .buttonStyle(.bordered)
-                                        .tint(.red)
-                                        .controlSize(.small)
+                                        .buttonStyle(.plain)
                                     }
                                     .padding(.vertical, 10)
                                     if friend.id != friends.last?.id { Divider() }
