@@ -121,10 +121,10 @@ struct FriendsListView: View {
                                             removeTarget = friend
                                         } label: {
                                             Text(Loc.t("delete"))
-                                                .font(.caption.weight(.semibold))
+                                                .font(.caption2.weight(.semibold))
                                                 .foregroundStyle(.red)
-                                                .padding(.horizontal, 10)
-                                                .padding(.vertical, 5)
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 3)
                                                 .background(Color.red.opacity(0.15), in: Capsule())
                                         }
                                         .buttonStyle(.plain)
