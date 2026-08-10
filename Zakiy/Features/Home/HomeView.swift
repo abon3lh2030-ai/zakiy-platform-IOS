@@ -40,14 +40,13 @@ struct HomeView: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(isProcessing)
-                    .confirmationDialog(Loc.t("choose_file"), isPresented: $showSourceChooser, titleVisibility: .visible) {
-                        Button(Loc.t("pick_from_library")) { showLibraryPicker = true }
-                        Button(Loc.t("upload_from_device")) { showFileImporter = true }
+                    .sheet(isPresented: $showSourceChooser) {
+                        ChooseFileSourceSheet(
+                            onPickLibrary: { showLibraryPicker = true },
+                            onUpload: { showFileImporter = true }
+                        )
+                        .presentationDetents([.height(240)])
                     }
-                    // confirmationDialog buttons don't automatically pick up the app's global
-                    // accent color the way regular SwiftUI buttons do — force it explicitly so
-                    // they render gold like the rest of the app instead of default system blue/black.
-                    .tint(Color.accentColor)
 
                     if isProcessing {
                         HStack(spacing: 8) {
@@ -178,6 +177,64 @@ struct HomeActionCard: View {
         .padding(16)
         .background(Color.appCard, in: RoundedRectangle(cornerRadius: 18))
         .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
+    }
+}
+
+/// Custom-styled replacement for a system confirmationDialog — the system one only lets us tint
+/// button text, not its background pill or the sheet's own backdrop, so it never actually
+/// matched the app's cream/card look no matter what color we forced on it.
+struct ChooseFileSourceSheet: View {
+    let onPickLibrary: () -> Void
+    let onUpload: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Capsule()
+                .fill(Color.secondary.opacity(0.3))
+                .frame(width: 36, height: 5)
+                .padding(.top, 10)
+
+            Text(Loc.t("choose_file"))
+                .font(.headline)
+
+            VStack(spacing: 12) {
+                sourceRow(icon: "books.vertical.fill", title: Loc.t("pick_from_library")) {
+                    dismiss()
+                    onPickLibrary()
+                }
+                sourceRow(icon: "doc.badge.plus", title: Loc.t("upload_from_device")) {
+                    dismiss()
+                    onUpload()
+                }
+            }
+            .padding(.horizontal)
+
+            Spacer()
+        }
+        .background(Color.appBackground)
+        .presentationDragIndicator(.hidden)
+    }
+
+    private func sourceRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundStyle(Color.appAccentText)
+                    .frame(width: 40, height: 40)
+                    .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 12))
+                Text(title).font(.body.weight(.medium)).foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: "chevron.forward")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(Color.appCard, in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
     }
 }
 
