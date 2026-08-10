@@ -89,7 +89,7 @@ struct FriendsListView: View {
                                 Text(Loc.t("no_friends_yet")).foregroundStyle(.secondary).padding(.vertical, 4)
                             } else {
                                 ForEach(friends) { friend in
-                                    HStack {
+                                    HStack(alignment: .center) {
                                         // Name first in the HStack so it lands on the right in
                                         // RTL (leading edge), delete button last so it lands on
                                         // the left (trailing edge) — matches every other row's
@@ -99,12 +99,19 @@ struct FriendsListView: View {
                                         // NavigationLink itself, not on the Text inside its
                                         // label — set on the inner Text, the link's own tint
                                         // silently overrides it and the name renders gold anyway.
+                                        //
+                                        // The bordered "حذف" pill is taller than plain text once
+                                        // its own internal padding is counted, so HStack's default
+                                        // center alignment still lines up their *frames* evenly
+                                        // but the name's baseline reads visually low next to the
+                                        // pill — pin the name to the same fixed row height instead.
                                         NavigationLink {
                                             ProfileView(userId: friend.userId)
                                         } label: {
                                             Text(friend.username)
                                         }
                                         .foregroundStyle(.primary)
+                                        .frame(height: 30)
                                         Spacer()
                                         Button(Loc.t("delete"), role: .destructive) {
                                             removeTarget = friend
