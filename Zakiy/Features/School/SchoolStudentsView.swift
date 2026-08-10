@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// كل طلاب المدرسة بأسمائهم الحقيقية الكاملة (لا بس اسم المستخدم المولّد) -
-/// مع زر إعادة تعيين كلمة سر لكل طالب لحاله، بنفس نمط SchoolTeachersView.
+/// مع زر إعادة تعيين كلمة سر وزر حذف لكل طالب لحاله، بنفس نمط SchoolTeachersView.
 struct SchoolStudentsView: View {
     @State private var students: [SchoolStudent] = []
     @State private var classes: [SchoolClass] = []
@@ -48,10 +48,16 @@ struct SchoolStudentsView: View {
             if let classId = student.classId, let name = classNames[classId] {
                 Text(name).font(.caption).foregroundStyle(.secondary)
             }
-            Button(Loc.t("btn_reset_password")) {
-                studentPendingReset = student
+            HStack {
+                Button(Loc.t("btn_reset_password")) {
+                    studentPendingReset = student
+                }
+                .font(.caption)
+                Button(Loc.t("btn_delete"), role: .destructive) {
+                    Task { await deleteStudent(student) }
+                }
+                .font(.caption)
             }
-            .font(.caption)
         }
         .padding(.vertical, 4)
         .confirmationDialog(
@@ -83,5 +89,10 @@ struct SchoolStudentsView: View {
         } catch {
             resetError = Loc.t("error_generic")
         }
+    }
+
+    private func deleteStudent(_ student: SchoolStudent) async {
+        try? await APIClient.shared.schoolDeleteAccount(userId: student.userId)
+        await load()
     }
 }
