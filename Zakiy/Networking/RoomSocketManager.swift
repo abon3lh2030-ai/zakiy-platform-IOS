@@ -129,7 +129,14 @@ final class RoomSocketManager {
     func raiseHand() { socket?.emit("raise_hand", ["room_code": roomState.roomCode]) }
     func toggleChat() { socket?.emit("toggle_chat", ["room_code": roomState.roomCode]) }
 
+    /// The backend deliberately does NOT echo board_stroke/board_update_stroke/board_clear back
+    /// to whoever sent them (`include_self=False` server-side — it assumes the sender already
+    /// has the correct local state), so we have to apply each one to our own `roomState` here
+    /// too, not just emit it. Skipping this made anything you drew vanish the instant you lifted
+    /// your finger, since nothing ever added it to the persisted list on your own device.
     func sendBoardStroke(_ stroke: BoardStroke) {
+        roomState.boardStrokes.append(stroke)
+
         var strokePayload: [String: Any] = [
             "id": stroke.id,
             "mode": stroke.mode,
@@ -148,6 +155,12 @@ final class RoomSocketManager {
     /// Moves/resizes an already-placed text element in place (used for dragging or pinch-resizing
     /// a text box on the whiteboard) instead of appending a brand-new stroke.
     func sendBoardUpdateStroke(id: String, x: Double? = nil, y: Double? = nil, fontSize: Double? = nil) {
+        if let index = roomState.boardStrokes.firstIndex(where: { $0.id == id }) {
+            if let x { roomState.boardStrokes[index].x = x }
+            if let y { roomState.boardStrokes[index].y = y }
+            if let fontSize { roomState.boardStrokes[index].fontSize = fontSize }
+        }
+
         var patch: [String: Any] = [:]
         if let x { patch["x"] = x }
         if let y { patch["y"] = y }
@@ -156,7 +169,10 @@ final class RoomSocketManager {
         socket?.emit("board_update_stroke", ["room_code": roomState.roomCode, "id": id, "patch": patch])
     }
 
-    func clearBoard() { socket?.emit("board_clear", ["room_code": roomState.roomCode]) }
+    func clearBoard() {
+        roomState.boardStrokes = []
+        socket?.emit("board_clear", ["room_code": roomState.roomCode])
+    }
 
     func emitVoiceJoin() { socket?.emit("voice_join", ["room_code": roomState.roomCode]) }
     func emitVoiceLeave() { socket?.emit("voice_leave", ["room_code": roomState.roomCode]) }

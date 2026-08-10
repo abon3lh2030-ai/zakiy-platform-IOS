@@ -27,9 +27,10 @@ struct ClassroomView: View {
         }
         .background(Color.appBackground)
         .toolbar {
-            // Each button is its own ToolbarItem (never several Buttons grouped inside one
-            // HStack under a single ToolbarItem) — grouping them breaks iOS's own overflow
-            // handling and can leave a dead "..." button that does nothing when tapped.
+            // A single native Menu instead of several individual ToolbarItems: with a leading
+            // "ابدأ اختبار" button also competing for space, too many separate toolbar items can
+            // still get silently collapsed by iOS into a dead-looking overflow glyph. A Menu is
+            // one guaranteed-interactive item regardless of how much room is left.
             if !isQuizActive {
                 if socket.roomState.canManageContent {
                     ToolbarItem(placement: .topBarLeading) {
@@ -37,17 +38,15 @@ struct ClassroomView: View {
                     }
                 }
                 ToolbarItem(placement: .primaryAction) {
-                    Button { showChat = true } label: { Image(systemName: "bubble.left.and.bubble.right") }
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    Button { showParticipants = true } label: { Image(systemName: "person.3") }
-                }
-                if socket.roomState.isHost {
-                    ToolbarItem(placement: .primaryAction) {
-                        Button { showInvite = true } label: { Image(systemName: "person.badge.plus") }
-                    }
-                    ToolbarItem(placement: .primaryAction) {
-                        Button { showManagement = true } label: { Image(systemName: "gearshape") }
+                    Menu {
+                        Button { showChat = true } label: { Label(Loc.t("chat"), systemImage: "bubble.left.and.bubble.right") }
+                        Button { showParticipants = true } label: { Label(Loc.t("participants"), systemImage: "person.3") }
+                        if socket.roomState.isHost {
+                            Button { showInvite = true } label: { Label(Loc.t("invite_friends"), systemImage: "person.badge.plus") }
+                            Button { showManagement = true } label: { Label(Loc.t("room_management"), systemImage: "gearshape") }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
                 }
             }

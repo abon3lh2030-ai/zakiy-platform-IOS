@@ -36,17 +36,18 @@ struct RoomQuizView: View {
         }
         .background(Color.appBackground)
         .toolbar {
-            // Separate ToolbarItems, not several Buttons grouped in one HStack under a single
-            // item — grouping breaks iOS's overflow handling and can produce a dead "..." button.
+            // A single native Menu, not several individual ToolbarItems — with limited nav bar
+            // width, iOS can still silently collapse multiple items into a dead-looking overflow
+            // glyph. A Menu is one guaranteed-interactive item no matter how much room is left.
             ToolbarItem(placement: .primaryAction) {
-                Button { showChat = true } label: { Image(systemName: "bubble.left.and.bubble.right") }
-            }
-            if socket.roomState.isHost {
-                ToolbarItem(placement: .primaryAction) {
-                    Button { showInvite = true } label: { Image(systemName: "person.badge.plus") }
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    Button { showManagement = true } label: { Image(systemName: "gearshape") }
+                Menu {
+                    Button { showChat = true } label: { Label(Loc.t("chat"), systemImage: "bubble.left.and.bubble.right") }
+                    if socket.roomState.isHost {
+                        Button { showInvite = true } label: { Label(Loc.t("invite_friends"), systemImage: "person.badge.plus") }
+                        Button { showManagement = true } label: { Label(Loc.t("room_management"), systemImage: "gearshape") }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
             }
         }
