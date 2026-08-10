@@ -32,8 +32,7 @@ struct QuizView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             startedAt = Date()
-            let raw = (try? await APIClient.shared.generateQuizRaw(text: sourceText, numQuestions: 10, lang: settings.languageCode)) ?? ""
-            questions = QuizParser.parse(raw)
+            questions = (try? await APIClient.shared.generateQuiz(text: sourceText, numQuestions: 10, lang: settings.languageCode)) ?? []
             isLoading = false
         }
     }

@@ -91,12 +91,22 @@ final class APIClient {
         return result.summary
     }
 
-    func generateQuizRaw(text: String, numQuestions: Int, lang: String) async throws -> String {
+    /// The backend returns `quiz_raw` as a JSON-array *string* (not markdown) whose shape already
+    /// matches `QuizQuestion`'s coding keys exactly — no separate text parser needed. The model
+    /// occasionally wraps it in ```json fences despite being told not to, so we defensively slice
+    /// out the outermost `[...]` before decoding.
+    func generateQuiz(text: String, numQuestions: Int, lang: String) async throws -> [QuizQuestion] {
         var request = authorizedRequest("/api/generate-quiz", method: "POST")
         jsonBody(&request, ["text": text, "num_questions": numQuestions, "lang": lang])
         struct QuizResponse: Decodable { let quizRaw: String; enum CodingKeys: String, CodingKey { case quizRaw = "quiz_raw" } }
         let result: QuizResponse = try await send(request)
-        return result.quizRaw
+
+        guard let start = result.quizRaw.firstIndex(of: "["), let end = result.quizRaw.lastIndex(of: "]"), start <= end else {
+            throw APIError.invalidResponse
+        }
+        let jsonSlice = String(result.quizRaw[start...end])
+        guard let data = jsonSlice.data(using: .utf8) else { throw APIError.invalidResponse }
+        return try JSONDecoder().decode([QuizQuestion].self, from: data)
     }
 
     /// The backend threads a conversation via a server-side `interaction_id` (pass the one from

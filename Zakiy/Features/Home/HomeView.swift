@@ -44,6 +44,10 @@ struct HomeView: View {
                         Button(Loc.t("pick_from_library")) { showLibraryPicker = true }
                         Button(Loc.t("upload_from_device")) { showFileImporter = true }
                     }
+                    // confirmationDialog buttons don't automatically pick up the app's global
+                    // accent color the way regular SwiftUI buttons do — force it explicitly so
+                    // they render gold like the rest of the app instead of default system blue/black.
+                    .tint(Color.accentColor)
 
                     if isProcessing {
                         HStack(spacing: 8) {

@@ -173,8 +173,14 @@ private struct WhiteboardTextElement: View {
     let canDraw: Bool
     let onCommit: (Double, Double, Double) -> Void
 
+    // The canvas is a raw pixel surface, but SwiftUI still mirrors `DragGesture.translation.width`
+    // when the environment is RTL (the same class of bug fixed earlier for the settings toggle's
+    // offset) — without correcting for it, dragging left moves the text right and vice versa.
+    @Environment(\.layoutDirection) private var layoutDirection
     @State private var dragOffset: CGSize = .zero
     @State private var pinchScale: CGFloat = 1
+
+    private var xMultiplier: CGFloat { layoutDirection == .rightToLeft ? -1 : 1 }
 
     private var basePosition: CGPoint {
         CGPoint(x: stroke.x ?? 0, y: stroke.y ?? 0)
@@ -193,9 +199,11 @@ private struct WhiteboardTextElement: View {
     private var combinedGesture: some Gesture {
         SimultaneousGesture(
             DragGesture()
-                .onChanged { value in dragOffset = value.translation }
+                .onChanged { value in
+                    dragOffset = CGSize(width: value.translation.width * xMultiplier, height: value.translation.height)
+                }
                 .onEnded { value in
-                    let newX = basePosition.x + value.translation.width
+                    let newX = basePosition.x + value.translation.width * xMultiplier
                     let newY = basePosition.y + value.translation.height
                     dragOffset = .zero
                     onCommit(newX, newY, baseFontSize)

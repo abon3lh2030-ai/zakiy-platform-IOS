@@ -143,8 +143,7 @@ struct RoomStudySetupSheet: View {
         isGeneratingQuiz = true
         errorMessage = nil
         do {
-            let raw = try await APIClient.shared.generateQuizRaw(text: sourceText, numQuestions: Int(numQuestions), lang: settings.languageCode)
-            let questions = QuizParser.parse(raw)
+            let questions = try await APIClient.shared.generateQuiz(text: sourceText, numQuestions: Int(numQuestions), lang: settings.languageCode)
             guard !questions.isEmpty else {
                 errorMessage = Loc.t("error_generic")
                 isGeneratingQuiz = false
