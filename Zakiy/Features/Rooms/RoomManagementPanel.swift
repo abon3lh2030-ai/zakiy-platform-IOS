@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Host-only sheet for managing participants: grant/revoke content permissions, force-mute,
-/// kick, and trigger a lucky draw.
+/// Host-only sheet for managing participants: grant/revoke whiteboard+quiz permission, force-mute,
+/// kick, and open/close the room's text chat.
 struct RoomManagementPanel: View {
     @Bindable var socket: RoomSocketManager
     @Environment(\.dismiss) private var dismiss
@@ -12,9 +12,12 @@ struct RoomManagementPanel: View {
             List {
                 Section {
                     Button {
-                        socket.luckyDraw()
+                        socket.toggleChat()
                     } label: {
-                        Label(Loc.t("lucky_draw"), systemImage: "dice.fill")
+                        Label(
+                            socket.roomState.chatEnabled ? Loc.t("close_chat") : Loc.t("open_chat"),
+                            systemImage: socket.roomState.chatEnabled ? "bubble.left.slash.fill" : "bubble.left.fill"
+                        )
                     }
                 }
 

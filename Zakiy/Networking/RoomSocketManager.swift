@@ -15,6 +15,7 @@ struct RoomState: Equatable {
     var boardStrokes: [BoardStroke] = []
     var raisedHands: [RaisedHand] = []
     var classStarted: Bool = false
+    var chatEnabled: Bool = true
 }
 
 @MainActor
@@ -126,10 +127,11 @@ final class RoomSocketManager {
 
     func startClass() { socket?.emit("start_class", ["room_code": roomState.roomCode]) }
     func raiseHand() { socket?.emit("raise_hand", ["room_code": roomState.roomCode]) }
-    func luckyDraw() { socket?.emit("lucky_draw", ["room_code": roomState.roomCode]) }
+    func toggleChat() { socket?.emit("toggle_chat", ["room_code": roomState.roomCode]) }
 
     func sendBoardStroke(_ stroke: BoardStroke) {
         var strokePayload: [String: Any] = [
+            "id": stroke.id,
             "mode": stroke.mode,
             "color": stroke.color,
         ]
@@ -141,6 +143,17 @@ final class RoomSocketManager {
         if let fontSize = stroke.fontSize { strokePayload["fontSize"] = fontSize }
         // The backend expects the stroke nested under a "stroke" key, not flattened into the payload.
         socket?.emit("board_stroke", ["room_code": roomState.roomCode, "stroke": strokePayload])
+    }
+
+    /// Moves/resizes an already-placed text element in place (used for dragging or pinch-resizing
+    /// a text box on the whiteboard) instead of appending a brand-new stroke.
+    func sendBoardUpdateStroke(id: String, x: Double? = nil, y: Double? = nil, fontSize: Double? = nil) {
+        var patch: [String: Any] = [:]
+        if let x { patch["x"] = x }
+        if let y { patch["y"] = y }
+        if let fontSize { patch["fontSize"] = fontSize }
+        guard !patch.isEmpty else { return }
+        socket?.emit("board_update_stroke", ["room_code": roomState.roomCode, "id": id, "patch": patch])
     }
 
     func clearBoard() { socket?.emit("board_clear", ["room_code": roomState.roomCode]) }
@@ -253,13 +266,25 @@ final class RoomSocketManager {
             Task { @MainActor in self?.roomState.boardStrokes.append(stroke) }
         }
 
+        socket.on("board_update_stroke") { [weak self] data, _ in
+            guard let dict = data.first as? [String: Any],
+                  let strokeId = dict["id"] as? String,
+                  let patch = dict["patch"] as? [String: Any] else { return }
+            Task { @MainActor in
+                guard let self, let index = self.roomState.boardStrokes.firstIndex(where: { $0.id == strokeId }) else { return }
+                if let x = patch["x"] as? Double { self.roomState.boardStrokes[index].x = x }
+                if let y = patch["y"] as? Double { self.roomState.boardStrokes[index].y = y }
+                if let fontSize = patch["fontSize"] as? Double { self.roomState.boardStrokes[index].fontSize = fontSize }
+            }
+        }
+
         socket.on("board_clear") { [weak self] _, _ in
             Task { @MainActor in self?.roomState.boardStrokes = [] }
         }
 
-        socket.on("lucky_draw_result") { data, _ in
-            guard let dict = data.first as? [String: Any] else { return }
-            NotificationCenter.default.post(name: .init("zakiy.socket.lucky_draw_result"), object: dict)
+        socket.on("chat_state") { [weak self] data, _ in
+            guard let enabled = (data.first as? [String: Any])?["enabled"] as? Bool else { return }
+            Task { @MainActor in self?.roomState.chatEnabled = enabled }
         }
     }
 
@@ -274,6 +299,7 @@ final class RoomSocketManager {
         roomState.durationMinutes = dict["duration_minutes"] as? Double
         roomState.sharedSummary = dict["shared_summary"] as? String
         roomState.classStarted = dict["class_started"] as? Bool ?? false
+        roomState.chatEnabled = dict["chat_enabled"] as? Bool ?? true
 
         if let quizArray = dict["quiz"] as? [[String: Any]] {
             roomState.quiz = quizArray.compactMap(Self.decodeQuizQuestion)
@@ -322,6 +348,7 @@ final class RoomSocketManager {
     private static func decodeStroke(_ dict: [String: Any]) -> BoardStroke? {
         guard let mode = dict["mode"] as? String, let color = dict["color"] as? String else { return nil }
         return BoardStroke(
+            id: dict["id"] as? String ?? UUID().uuidString,
             mode: mode,
             points: dict["points"] as? [[Double]],
             color: color,

@@ -71,20 +71,28 @@ struct RoomChatBody: View {
             }
 
             Divider()
-            HStack {
-                TextField(Loc.t("type_a_message"), text: $input)
-                    .textFieldStyle(.roundedBorder)
-                    .onChange(of: input) { _, newValue in
-                        handleInputChange(newValue)
+            if socket.roomState.chatEnabled {
+                HStack {
+                    TextField(Loc.t("type_a_message"), text: $input)
+                        .textFieldStyle(.roundedBorder)
+                        .onChange(of: input) { _, newValue in
+                            handleInputChange(newValue)
+                        }
+                    Button {
+                        send()
+                    } label: {
+                        Image(systemName: "paperplane.fill")
                     }
-                Button {
-                    send()
-                } label: {
-                    Image(systemName: "paperplane.fill")
+                    .disabled(input.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
-                .disabled(input.trimmingCharacters(in: .whitespaces).isEmpty)
+                .padding()
+            } else {
+                Label(Loc.t("chat_closed"), systemImage: "bubble.left.slash.fill")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding()
             }
-            .padding()
         }
         .background(Color.appBackground)
         .onDisappear {

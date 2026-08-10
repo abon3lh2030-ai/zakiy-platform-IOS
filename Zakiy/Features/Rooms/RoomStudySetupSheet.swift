@@ -1,18 +1,24 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Sheet the host uses to prepare a quiz for the room: paste text, upload a PDF, or pick a
-/// saved library book, then generate AI questions and hand them back to the room.
+/// Sheet the host uses to prepare a quiz for the room: pick a source (paste, upload, or a saved
+/// library book — "any book"), generate a summary, optionally share it with the room, then
+/// generate and start the quiz. A summary is required before starting — this both matches the
+/// old flow and gives students something to review first.
 struct RoomStudySetupSheet: View {
+    @Bindable var socket: RoomSocketManager
     let onStart: ([QuizQuestion], Double) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(AppSettings.self) private var settings
 
     @State private var sourceText = ""
+    @State private var summary: String?
+    @State private var isSummarySharedWithRoom = false
     @State private var numQuestions = 10.0
     @State private var durationMinutes = 5.0
-    @State private var isGenerating = false
+    @State private var isGeneratingSummary = false
+    @State private var isGeneratingQuiz = false
     @State private var errorMessage: String?
     @State private var showFileImporter = false
     @State private var showLibraryPicker = false
@@ -23,6 +29,7 @@ struct RoomStudySetupSheet: View {
                 Section(Loc.t("source_text")) {
                     TextField(Loc.t("paste_text_here"), text: $sourceText, axis: .vertical)
                         .lineLimit(4...10)
+                        .onChange(of: sourceText) { summary = nil; isSummarySharedWithRoom = false }
 
                     Button {
                         showFileImporter = true
@@ -37,8 +44,37 @@ struct RoomStudySetupSheet: View {
                     }
                 }
 
+                Section(Loc.t("shared_summary")) {
+                    if let summary {
+                        Text(summary).font(.footnote).foregroundStyle(.secondary).lineLimit(6)
+
+                        Toggle(Loc.t("share_summary_with_room"), isOn: Binding(
+                            get: { isSummarySharedWithRoom },
+                            set: { newValue in
+                                isSummarySharedWithRoom = newValue
+                                if newValue { socket.shareSummary(summary) }
+                            }
+                        ))
+                    } else {
+                        Button {
+                            Task { await generateSummary() }
+                        } label: {
+                            if isGeneratingSummary {
+                                ProgressView().frame(maxWidth: .infinity)
+                            } else {
+                                Text(Loc.t("generate_summary")).frame(maxWidth: .infinity)
+                            }
+                        }
+                        .disabled(sourceText.trimmingCharacters(in: .whitespaces).isEmpty || isGeneratingSummary)
+
+                        Text(Loc.t("summary_required_hint"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
                 Section(Loc.t("quiz_settings")) {
-                    Stepper(String(format: Loc.t("num_questions_format"), Int(numQuestions)), value: $numQuestions, in: 3...20, step: 1)
+                    Stepper(String(format: Loc.t("num_questions_format"), Int(numQuestions)), value: $numQuestions, in: 5...20, step: 1)
                     Stepper(String(format: Loc.t("duration_minutes_format"), Int(durationMinutes)), value: $durationMinutes, in: 1...30, step: 1)
                 }
 
@@ -48,18 +84,18 @@ struct RoomStudySetupSheet: View {
 
                 Section {
                     Button {
-                        Task { await generateAndStart() }
+                        Task { await generateQuizAndStart() }
                     } label: {
-                        if isGenerating {
+                        if isGeneratingQuiz {
                             ProgressView().frame(maxWidth: .infinity)
                         } else {
                             Text(Loc.t("start_quiz")).frame(maxWidth: .infinity)
                         }
                     }
-                    .disabled(sourceText.trimmingCharacters(in: .whitespaces).isEmpty || isGenerating)
+                    .disabled(summary == nil || isGeneratingQuiz)
                 }
             }
-            .navigationTitle(Loc.t("prepare_quiz"))
+            .navigationTitle(Loc.t("start_study_button"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -91,15 +127,27 @@ struct RoomStudySetupSheet: View {
         }
     }
 
-    private func generateAndStart() async {
-        isGenerating = true
+    private func generateSummary() async {
+        isGeneratingSummary = true
+        errorMessage = nil
+        do {
+            summary = try await APIClient.shared.summarize(text: sourceText, lang: settings.languageCode)
+        } catch {
+            errorMessage = Loc.t("error_generic")
+        }
+        isGeneratingSummary = false
+    }
+
+    private func generateQuizAndStart() async {
+        guard summary != nil else { return }
+        isGeneratingQuiz = true
         errorMessage = nil
         do {
             let raw = try await APIClient.shared.generateQuizRaw(text: sourceText, numQuestions: Int(numQuestions), lang: settings.languageCode)
             let questions = QuizParser.parse(raw)
             guard !questions.isEmpty else {
                 errorMessage = Loc.t("error_generic")
-                isGenerating = false
+                isGeneratingQuiz = false
                 return
             }
             onStart(questions, durationMinutes)
@@ -107,6 +155,6 @@ struct RoomStudySetupSheet: View {
         } catch {
             errorMessage = Loc.t("error_generic")
         }
-        isGenerating = false
+        isGeneratingQuiz = false
     }
 }

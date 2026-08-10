@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Live-lesson room UI: shared whiteboard, voice chat, raised hands, and text chat side panel.
+/// Live-lesson room UI: shared whiteboard (with granted-permission drawing), voice chat, raised
+/// hands, and an optional embedded quiz — the host can start one from any book at any point.
 struct ClassroomView: View {
     @Bindable var socket: RoomSocketManager
 
@@ -8,45 +9,38 @@ struct ClassroomView: View {
     @State private var showInvite = false
     @State private var showChat = false
     @State private var showParticipants = false
-    @State private var luckyDrawWinner: String?
+    @State private var showQuizSetup = false
+
+    private var isQuizActive: Bool {
+        socket.roomState.quiz != nil && socket.roomState.quizStartedAt != nil
+    }
 
     var body: some View {
-        VStack(spacing: 0) {
-            if !socket.roomState.classStarted && !socket.roomState.isHost {
+        Group {
+            if isQuizActive {
+                RoomQuizPlayView(socket: socket)
+            } else if !socket.roomState.classStarted && !socket.roomState.isHost {
                 waitingForHost
             } else {
-                VStack(spacing: 0) {
-                    WhiteboardCanvasView(socket: socket)
-                        .frame(maxHeight: .infinity)
-                    VoiceBarView(socket: socket)
-                }
-
-                if !socket.roomState.classStarted && socket.roomState.isHost {
-                    Button {
-                        socket.startClass()
-                    } label: {
-                        Text(Loc.t("start_class")).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.appPrimary)
-                    .padding()
-                }
-
-                if !socket.roomState.raisedHands.isEmpty {
-                    raisedHandsBar
-                }
-
-                bottomBar
+                classroomContent
             }
         }
         .background(Color.appBackground)
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                HStack(spacing: 14) {
-                    Button { showChat = true } label: { Image(systemName: "bubble.left.and.bubble.right") }
-                    Button { showParticipants = true } label: { Image(systemName: "person.3") }
-                    if socket.roomState.isHost {
-                        Button { showInvite = true } label: { Image(systemName: "person.badge.plus") }
-                        Button { showManagement = true } label: { Image(systemName: "gearshape") }
+            if !isQuizActive {
+                ToolbarItem(placement: .primaryAction) {
+                    HStack(spacing: 14) {
+                        Button { showChat = true } label: { Image(systemName: "bubble.left.and.bubble.right") }
+                        Button { showParticipants = true } label: { Image(systemName: "person.3") }
+                        if socket.roomState.isHost {
+                            Button { showInvite = true } label: { Image(systemName: "person.badge.plus") }
+                            Button { showManagement = true } label: { Image(systemName: "gearshape") }
+                        }
+                    }
+                }
+                if socket.roomState.canManageContent {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(Loc.t("start_quiz")) { showQuizSetup = true }
                     }
                 }
             }
@@ -63,15 +57,57 @@ struct ClassroomView: View {
         .sheet(isPresented: $showParticipants) {
             ClassroomParticipantsSheet(socket: socket)
         }
-        .onReceive(NotificationCenter.default.publisher(for: .init("zakiy.socket.lucky_draw_result"))) { notification in
-            guard let dict = notification.object as? [String: Any], let name = dict["winner_name"] as? String else { return }
-            luckyDrawWinner = name
+        .sheet(isPresented: $showQuizSetup) {
+            RoomStudySetupSheet(socket: socket) { questions, duration in
+                socket.startQuiz(questions, durationMinutes: duration)
+            }
         }
-        .alert(Loc.t("lucky_draw"), isPresented: .constant(luckyDrawWinner != nil)) {
-            Button(Loc.t("ok"), role: .cancel) { luckyDrawWinner = nil }
-        } message: {
-            Text(String(format: Loc.t("lucky_draw_winner"), luckyDrawWinner ?? ""))
+    }
+
+    private var classroomContent: some View {
+        VStack(spacing: 0) {
+            header
+
+            VStack(spacing: 0) {
+                WhiteboardCanvasView(socket: socket)
+                    .frame(maxHeight: .infinity)
+                VoiceBarView(socket: socket)
+            }
+
+            if !socket.roomState.classStarted && socket.roomState.isHost {
+                Button {
+                    socket.startClass()
+                } label: {
+                    Text(Loc.t("start_class")).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.appPrimary)
+                .padding()
+            }
+
+            if !socket.roomState.raisedHands.isEmpty {
+                raisedHandsBar
+            }
+
+            bottomBar
         }
+    }
+
+    private var header: some View {
+        HStack {
+            Text(String(format: Loc.t("room_code_label"), socket.roomState.roomCode))
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            Spacer()
+            if socket.roomState.isHost {
+                Text(Loc.t("host_badge"))
+                    .font(.caption.bold())
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Color.accentColor.opacity(0.2), in: Capsule())
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
     }
 
     private var waitingForHost: some View {

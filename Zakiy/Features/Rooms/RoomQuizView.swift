@@ -47,7 +47,7 @@ struct RoomQuizView: View {
             }
         }
         .sheet(isPresented: $showSetup) {
-            RoomStudySetupSheet { questions, duration in
+            RoomStudySetupSheet(socket: socket) { questions, duration in
                 socket.startQuiz(questions, durationMinutes: duration)
             }
         }
@@ -106,7 +106,7 @@ struct RoomQuizView: View {
             Button {
                 showSetup = true
             } label: {
-                Text(Loc.t("prepare_quiz")).frame(maxWidth: .infinity)
+                Text(Loc.t("start_study_button")).frame(maxWidth: .infinity)
             }
             .buttonStyle(.appPrimary)
             .padding(.horizontal)

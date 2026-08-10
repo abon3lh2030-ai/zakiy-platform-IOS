@@ -310,7 +310,10 @@ struct RaisedHand: Identifiable, Codable, Equatable {
     }
 }
 
-struct BoardStroke: Codable, Equatable {
+struct BoardStroke: Codable, Equatable, Identifiable {
+    /// Client-generated so a placed text element can be found again later and moved/resized via
+    /// `board_update_stroke` — the backend just stores and relays whatever we send.
+    var id: String = UUID().uuidString
     var mode: String
     var points: [[Double]]?
     var color: String

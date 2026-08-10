@@ -6,6 +6,8 @@ struct HomeView: View {
     @Environment(AppSettings.self) private var settings
 
     @State private var showFileImporter = false
+    @State private var showSourceChooser = false
+    @State private var showLibraryPicker = false
     @State private var isProcessing = false
     @State private var errorMessage: String?
     @State private var extractedText: ExtractedText?
@@ -24,20 +26,24 @@ struct HomeView: View {
                 VStack(spacing: 14) {
                     Button {
                         if UsageLimiter.shared.canPerform(.soloSession) {
-                            showFileImporter = true
+                            showSourceChooser = true
                         } else {
                             showPaywall = true
                         }
                     } label: {
                         HomeActionCard(
-                            icon: "doc.badge.plus",
+                            icon: "doc.text.magnifyingglass",
                             tint: .accentColor,
-                            title: Loc.t("upload_pdf"),
-                            subtitle: Loc.t("upload_pdf_subtitle")
+                            title: Loc.t("start_solo_study"),
+                            subtitle: Loc.t("start_solo_study_subtitle")
                         )
                     }
                     .buttonStyle(.plain)
                     .disabled(isProcessing)
+                    .confirmationDialog(Loc.t("choose_file"), isPresented: $showSourceChooser, titleVisibility: .visible) {
+                        Button(Loc.t("pick_from_library")) { showLibraryPicker = true }
+                        Button(Loc.t("upload_from_device")) { showFileImporter = true }
+                    }
 
                     if isProcessing {
                         HStack(spacing: 8) {
@@ -95,6 +101,12 @@ struct HomeView: View {
             switch result {
             case .success(let url): Task { await handleUpload(url: url) }
             case .failure: errorMessage = Loc.t("error_generic")
+            }
+        }
+        .sheet(isPresented: $showLibraryPicker) {
+            LibraryPickerView { detail in
+                UsageLimiter.shared.recordUsage(.soloSession)
+                extractedText = ExtractedText(value: detail.extractedText)
             }
         }
         .navigationDestination(item: $extractedText) { text in
