@@ -96,12 +96,7 @@ struct FriendsListView: View {
                                 Text(Loc.t("no_friends_yet")).foregroundStyle(.secondary).padding(.vertical, 4)
                             } else {
                                 ForEach(friends) { friend in
-                                    // No Spacer / full-width stretch here — name and delete sit
-                                    // right next to each other as one compact group instead of
-                                    // being pulled apart to the card's two far edges. The group
-                                    // as a whole sits at the row's leading (right, in RTL) side
-                                    // via the outer VStack's alignment: .leading.
-                                    HStack(spacing: 10) {
+                                    HStack(alignment: .center) {
                                         // .foregroundStyle(.primary) has to sit on the
                                         // NavigationLink itself, not on the Text inside its
                                         // label — set on the inner Text, the link's own tint
@@ -112,7 +107,7 @@ struct FriendsListView: View {
                                             Text(friend.username)
                                         }
                                         .foregroundStyle(.primary)
-
+                                        Spacer()
                                         // A hand-sized pill, not .buttonStyle(.bordered) — the
                                         // system bordered style carries its own large minimum tap
                                         // padding that made the pill visibly bigger than the name
@@ -121,14 +116,15 @@ struct FriendsListView: View {
                                             removeTarget = friend
                                         } label: {
                                             Text(Loc.t("delete"))
-                                                .font(.caption2.weight(.semibold))
+                                                .font(.subheadline.weight(.semibold))
                                                 .foregroundStyle(.red)
-                                                .padding(.horizontal, 8)
-                                                .padding(.vertical, 3)
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 6)
                                                 .background(Color.red.opacity(0.15), in: Capsule())
                                         }
                                         .buttonStyle(.plain)
                                     }
+                                    .frame(maxWidth: .infinity)
                                     .padding(.vertical, 10)
                                     if friend.id != friends.last?.id { Divider() }
                                 }
