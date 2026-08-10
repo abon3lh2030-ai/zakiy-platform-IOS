@@ -4,7 +4,6 @@ struct RoomsHubView: View {
     @Environment(SupabaseAuthManager.self) private var auth
 
     @State private var invites: [SessionInvite] = []
-    @State private var joinCode = ""
     @State private var joinTarget: JoinTarget?
 
     private struct JoinTarget: Identifiable, Hashable {
@@ -42,8 +41,10 @@ struct RoomsHubView: View {
                     .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
                 }
 
+                // Each card leads into RoomLobbyView, which itself handles both creating a new
+                // room of this type and joining an existing one by code — no separate join UI here.
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(Loc.t("create_room")).font(.headline)
+                    Text(Loc.t("rooms")).font(.headline)
 
                     NavigationLink {
                         RoomLobbyView(roomType: "quiz")
@@ -58,23 +59,6 @@ struct RoomsHubView: View {
                         StudyOptionCard(icon: "person.crop.rectangle.stack.fill", title: Loc.t("room_type_classroom"), subtitle: Loc.t("live_lesson_subtitle"))
                     }
                     .buttonStyle(.plain)
-                }
-
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(Loc.t("join_by_code")).font(.headline)
-                    HStack(spacing: 10) {
-                        TextField(Loc.t("room_code_placeholder"), text: $joinCode)
-                            .textInputAutocapitalization(.characters)
-                            .autocorrectionDisabled()
-                            .textFieldStyle(.roundedBorder)
-                        Button(Loc.t("join")) {
-                            let code = joinCode.trimmingCharacters(in: .whitespaces).uppercased()
-                            guard !code.isEmpty else { return }
-                            joinTarget = JoinTarget(roomCode: code, roomType: "quiz")
-                        }
-                        .buttonStyle(.appPrimary)
-                        .disabled(joinCode.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
                 }
             }
             .padding()

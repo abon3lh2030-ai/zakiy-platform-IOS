@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Pre-creation screen: lets the user pick a display name (for guests) then creates a fresh
-/// room of `roomType` on the backend and hands off to `RoomContainerView`.
+/// Room entry screen: lets the user either create a fresh room of `roomType`, or join an
+/// existing one by typing/scanning its code — matches the merged create+join layout from the
+/// previous app build (one screen instead of two separate flows).
 struct RoomLobbyView: View {
     let roomType: String
 
@@ -9,14 +10,17 @@ struct RoomLobbyView: View {
     @Environment(AppSettings.self) private var settings
 
     @State private var guestName = ""
+    @State private var joinCode = ""
     @State private var isCreating = false
     @State private var errorMessage: String?
     @State private var showPaywall = false
-    @State private var createdCode: CreatedRoomCode?
+    @State private var showScanner = false
+    @State private var destination: RoomDestination?
 
-    private struct CreatedRoomCode: Identifiable, Hashable {
+    private struct RoomDestination: Identifiable, Hashable {
         let code: String
-        var id: String { code }
+        let isCreator: Bool
+        var id: String { code + "\(isCreator)" }
     }
 
     private var limitedAction: LimitedAction { roomType == "classroom" ? .liveLesson : .groupRoom }
@@ -28,49 +32,84 @@ struct RoomLobbyView: View {
     }
 
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
+        ScrollView {
+            VStack(spacing: 20) {
+                if !auth.isAuthenticated {
+                    TextField(Loc.t("your_name"), text: $guestName)
+                        .textFieldStyle(.plain)
+                        .padding(16)
+                        .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
+                }
 
-            Image(systemName: roomType == "classroom" ? "person.crop.rectangle.stack.fill" : "person.3.fill")
-                .font(.system(size: 50))
-                .foregroundStyle(Color.accentColor)
+                Button {
+                    Task { await createRoom() }
+                } label: {
+                    HStack {
+                        Text(Loc.t("create_room"))
+                        Spacer()
+                        if isCreating {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(Color.accentColor)
+                        }
+                    }
+                    .padding(16)
+                }
+                .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
+                .disabled(isCreating)
 
-            Text(roomType == "classroom" ? Loc.t("room_type_classroom") : Loc.t("group_room"))
-                .font(.title2.bold())
+                if let errorMessage {
+                    Text(errorMessage).font(.footnote).foregroundStyle(.red)
+                }
 
-            if !auth.isAuthenticated {
-                TextField(Loc.t("your_name"), text: $guestName)
-                    .textFieldStyle(.roundedBorder)
-                    .padding(.horizontal, 40)
-            }
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(Loc.t("join_by_code"))
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
 
-            if let errorMessage {
-                Text(errorMessage).font(.footnote).foregroundStyle(.red)
-            }
+                    VStack(spacing: 0) {
+                        TextField(Loc.t("room_code_placeholder"), text: $joinCode)
+                            .textInputAutocapitalization(.characters)
+                            .autocorrectionDisabled()
+                            .submitLabel(.join)
+                            .onSubmit { joinByCode() }
+                            .padding(16)
 
-            Button {
-                Task { await createRoom() }
-            } label: {
-                if isCreating {
-                    ProgressView().frame(maxWidth: .infinity)
-                } else {
-                    Text(Loc.t("create_room")).frame(maxWidth: .infinity)
+                        Divider()
+
+                        Button {
+                            showScanner = true
+                        } label: {
+                            HStack {
+                                Text(Loc.t("scan_qr_code"))
+                                Spacer()
+                                Image(systemName: "qrcode.viewfinder")
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                            .padding(16)
+                        }
+                    }
+                    .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
                 }
             }
-            .buttonStyle(.appPrimary)
-            .padding(.horizontal, 40)
-            .disabled(isCreating)
-
-            Spacer()
+            .padding()
         }
         .background(Color.appBackground)
-        .navigationTitle(Loc.t("create_room"))
+        .navigationTitle(roomType == "classroom" ? Loc.t("room_type_classroom") : Loc.t("group_room"))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showPaywall) {
             PaywallView(triggeredBy: limitedAction)
         }
-        .navigationDestination(item: $createdCode) { created in
-            RoomContainerView(roomCode: created.code, roomType: roomType, isCreator: true, guestName: displayName)
+        .sheet(isPresented: $showScanner) {
+            QRScannerView(onRoomCode: { code in
+                showScanner = false
+                joinCode = code
+                joinByCode()
+            })
+        }
+        .navigationDestination(item: $destination) { dest in
+            RoomContainerView(roomCode: dest.code, roomType: roomType, isCreator: dest.isCreator, guestName: displayName)
         }
     }
 
@@ -84,10 +123,16 @@ struct RoomLobbyView: View {
         do {
             let code = try await APIClient.shared.createRoom(roomType: roomType)
             UsageLimiter.shared.recordUsage(limitedAction)
-            createdCode = CreatedRoomCode(code: code)
+            destination = RoomDestination(code: code, isCreator: true)
         } catch {
             errorMessage = Loc.t("error_generic")
         }
         isCreating = false
+    }
+
+    private func joinByCode() {
+        let code = joinCode.trimmingCharacters(in: .whitespaces).uppercased()
+        guard !code.isEmpty else { return }
+        destination = RoomDestination(code: code, isCreator: false)
     }
 }

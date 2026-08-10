@@ -2,6 +2,11 @@ import AVFoundation
 import SwiftUI
 
 struct QRScannerView: View {
+    /// When set, the scanner accepts a bare room code (or `zakiy://room/<code>`) and hands it
+    /// back instead of running the default friend-add flow — used from the room lobby's
+    /// "scan QR" entry point.
+    var onRoomCode: ((String) -> Void)? = nil
+
     @Environment(\.dismiss) private var dismiss
     @State private var scannedUserId: String?
     @State private var errorMessage: String?
@@ -43,6 +48,17 @@ struct QRScannerView: View {
     }
 
     private func handleScan(_ code: String) {
+        if let onRoomCode {
+            guard scannedUserId == nil else { return }
+            scannedUserId = code // reuse as a simple "already handled" guard
+            if let range = code.range(of: "zakiy://room/") {
+                onRoomCode(String(code[range.upperBound...]))
+            } else {
+                onRoomCode(code.trimmingCharacters(in: .whitespacesAndNewlines))
+            }
+            return
+        }
+
         guard scannedUserId == nil else { return }
         guard let range = code.range(of: "zakiy://profile/") else {
             errorMessage = Loc.t("invalid_qr_code")
