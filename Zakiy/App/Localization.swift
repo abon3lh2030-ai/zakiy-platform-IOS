@@ -276,6 +276,13 @@ enum Loc {
         "camera_permission_denied": "لازم تسمح باستخدام الكاميرا عشان تمسح رمز QR",
         "camera_unavailable": "الكاميرا غير متوفرة على هذا الجهاز",
         "open_settings": "افتح الإعدادات",
+        "extracted_text": "نص الملف",
+        "show_more": "عرض المزيد",
+        "show_less": "عرض أقل",
+        "chat_empty_title": "اسأل عن أي شي بالملف",
+        "chat_empty_subtitle": "مثلًا: لخّص لي الفكرة الرئيسية، أو وضّح لي هذي النقطة",
+        "is_typing": "%@ يكتب...",
+        "are_typing": "أكثر من شخص يكتبون...",
     ]
 
     static let en: [String: String] = [
@@ -544,5 +551,12 @@ enum Loc {
         "camera_permission_denied": "Camera access is needed to scan a QR code",
         "camera_unavailable": "Camera isn't available on this device",
         "open_settings": "Open Settings",
+        "extracted_text": "File Text",
+        "show_more": "Show More",
+        "show_less": "Show Less",
+        "chat_empty_title": "Ask anything about the file",
+        "chat_empty_subtitle": "For example: summarize the main idea, or explain this point",
+        "is_typing": "%@ is typing...",
+        "are_typing": "Several people are typing...",
     ]
 }

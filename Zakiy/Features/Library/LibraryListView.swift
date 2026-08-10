@@ -195,29 +195,49 @@ struct LibraryDetailView: View {
 
     @State private var detail: LibraryBookDetail?
     @State private var isLoading = true
+    @State private var isTextExpanded = false
 
     var body: some View {
-        ScrollView {
+        Group {
             if isLoading {
-                ProgressView(Loc.t("loading")).padding(.top, 60)
+                ProgressView(Loc.t("loading"))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let detail {
-                NavigationLink {
-                    StudyHubView(sourceText: detail.extractedText)
-                } label: {
-                    Label(Loc.t("open_for_study"), systemImage: "book")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.appPrimary)
-                .padding()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 18) {
+                        NavigationLink {
+                            StudyHubView(sourceText: detail.extractedText)
+                        } label: {
+                            StudyOptionCard(icon: "book.fill", title: Loc.t("open_for_study"), subtitle: title)
+                        }
+                        .buttonStyle(.plain)
 
-                Text(detail.extractedText)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(Loc.t("extracted_text")).font(.headline)
+                            Text(detail.extractedText)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(isTextExpanded ? nil : 8)
+
+                            Button(isTextExpanded ? Loc.t("show_less") : Loc.t("show_more")) {
+                                withAnimation { isTextExpanded.toggle() }
+                            }
+                            .font(.footnote.bold())
+                            .foregroundStyle(Color.accentColor)
+                        }
+                        .padding()
+                        .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
+                    }
                     .padding()
+                }
+            } else {
+                ContentUnavailableView(title, systemImage: "book.closed", description: Text(Loc.t("error_generic")))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .background(Color.appBackground)
         .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
         .task {
             detail = try? await APIClient.shared.libraryBook(id: bookId)
             isLoading = false

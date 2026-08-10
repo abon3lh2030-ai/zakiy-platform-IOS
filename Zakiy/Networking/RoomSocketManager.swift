@@ -89,6 +89,9 @@ final class RoomSocketManager {
         socket?.emit("chat_message", ["room_code": roomState.roomCode, "message": text])
     }
 
+    func sendTyping() { socket?.emit("typing", ["room_code": roomState.roomCode]) }
+    func sendStopTyping() { socket?.emit("stop_typing", ["room_code": roomState.roomCode]) }
+
     func shareSummary(_ summary: String) {
         socket?.emit("share_summary", ["room_code": roomState.roomCode, "summary": summary])
     }

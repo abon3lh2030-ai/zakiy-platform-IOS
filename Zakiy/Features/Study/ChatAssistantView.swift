@@ -13,26 +13,43 @@ struct ChatAssistantView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 12) {
-                        ForEach(messages) { message in
-                            ChatBubble(message: message)
-                                .id(message.id)
-                        }
-                        if isSending {
-                            HStack {
-                                ProgressView()
-                                Spacer()
-                            }
-                            .padding(.horizontal)
-                        }
-                    }
-                    .padding()
+            if messages.isEmpty {
+                VStack(spacing: 10) {
+                    Spacer()
+                    Image(systemName: "bubble.left.and.bubble.right.fill")
+                        .font(.system(size: 40))
+                        .foregroundStyle(Color.accentColor)
+                    Text(Loc.t("chat_empty_title")).font(.headline)
+                    Text(Loc.t("chat_empty_subtitle"))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                    Spacer()
                 }
-                .onChange(of: messages.count) {
-                    if let last = messages.last {
-                        withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 12) {
+                            ForEach(messages) { message in
+                                ChatBubble(message: message)
+                                    .id(message.id)
+                            }
+                            if isSending {
+                                HStack {
+                                    ProgressView()
+                                    Spacer()
+                                }
+                                .padding(.horizontal)
+                            }
+                        }
+                        .padding()
+                    }
+                    .onChange(of: messages.count) {
+                        if let last = messages.last {
+                            withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                        }
                     }
                 }
             }
