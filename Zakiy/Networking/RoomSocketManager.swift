@@ -31,6 +31,9 @@ final class RoomSocketManager {
     var errorMessage: String?
     var wasKicked = false
     var forceMutedSignal = 0
+    /// The display name we joined with — used purely client-side to tell "my own" chat bubbles
+    /// apart from others' (the backend's chat_message event only carries a name, not a sid).
+    private(set) var myName = ""
 
     static let persistentClientId: String = {
         let key = "zakiy.clientId"
@@ -41,6 +44,7 @@ final class RoomSocketManager {
     }()
 
     func connect(roomCode: String, name: String) {
+        myName = name
         let manager = SocketManager(socketURL: APIConfig.apiBase, config: [.log(false), .compress, .forceWebsockets(true)])
         self.manager = manager
         let socket = manager.defaultSocket

@@ -1,6 +1,16 @@
 import AVFoundation
 import SwiftUI
 
+/// Camera state as reported by `ScannerViewController` — needed because a silent black screen
+/// (no permission prompt shown, no device found — e.g. on Simulator with no camera hardware, or
+/// after a prior "Don't Allow") gives no feedback at all otherwise.
+enum CameraAvailability: Equatable {
+    case checking
+    case ready
+    case denied
+    case noCameraHardware
+}
+
 struct QRScannerView: View {
     /// When set, the scanner accepts a bare room code (or `zakiy://room/<code>`) and hands it
     /// back instead of running the default friend-add flow — used from the room lobby's
@@ -12,14 +22,24 @@ struct QRScannerView: View {
     @State private var errorMessage: String?
     @State private var isSending = false
     @State private var requestSent = false
+    @State private var cameraAvailability: CameraAvailability = .checking
+    @State private var manualCode = ""
 
     var body: some View {
         NavigationStack {
             ZStack {
-                QRScannerRepresentable { code in
-                    handleScan(code)
+                if cameraAvailability == .ready {
+                    QRScannerRepresentable(onScan: handleScan, onAvailabilityChange: { cameraAvailability = $0 })
+                        .ignoresSafeArea()
+                } else {
+                    // Also drives the initial permission check/request — the representable only
+                    // reports availability once its session actually configures.
+                    QRScannerRepresentable(onScan: handleScan, onAvailabilityChange: { cameraAvailability = $0 })
+                        .ignoresSafeArea()
+                        .opacity(0.001) // keep it running (to receive the availability callback) without showing a stuck black frame
+
+                    unavailableOverlay
                 }
-                .ignoresSafeArea()
 
                 VStack {
                     Spacer()
@@ -45,6 +65,49 @@ struct QRScannerView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private var unavailableOverlay: some View {
+        VStack(spacing: 16) {
+            switch cameraAvailability {
+            case .checking:
+                ProgressView()
+            case .denied:
+                Image(systemName: "camera.fill").font(.system(size: 40)).foregroundStyle(.secondary)
+                Text(Loc.t("camera_permission_denied")).multilineTextAlignment(.center).foregroundStyle(.secondary)
+                Button(Loc.t("open_settings")) {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                .buttonStyle(.appPrimary)
+            case .noCameraHardware, .ready:
+                Image(systemName: "camera.fill").font(.system(size: 40)).foregroundStyle(.secondary)
+                Text(Loc.t("camera_unavailable")).multilineTextAlignment(.center).foregroundStyle(.secondary)
+            }
+
+            // Manual code entry is the only way to test the room-join scanner on Simulator
+            // (no camera hardware), and a reasonable fallback for a broken camera generally.
+            if onRoomCode != nil {
+                VStack(spacing: 10) {
+                    TextField(Loc.t("room_code_placeholder"), text: $manualCode)
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled()
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 220)
+                    Button(Loc.t("join")) {
+                        onRoomCode?(manualCode.trimmingCharacters(in: .whitespaces).uppercased())
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(manualCode.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+                .padding(.top, 8)
+            }
+        }
+        .padding(32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
     }
 
     private func handleScan(_ code: String) {
@@ -81,10 +144,12 @@ struct QRScannerView: View {
 
 private struct QRScannerRepresentable: UIViewControllerRepresentable {
     let onScan: (String) -> Void
+    let onAvailabilityChange: (CameraAvailability) -> Void
 
     func makeUIViewController(context: Context) -> ScannerViewController {
         let vc = ScannerViewController()
         vc.onScan = onScan
+        vc.onAvailabilityChange = onAvailabilityChange
         return vc
     }
 
@@ -93,19 +158,52 @@ private struct QRScannerRepresentable: UIViewControllerRepresentable {
 
 final class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
     var onScan: ((String) -> Void)?
+    var onAvailabilityChange: ((CameraAvailability) -> Void)?
     private let session = AVCaptureSession()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
+        requestAccessThenConfigure()
+    }
 
+    private func requestAccessThenConfigure() {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            configureSession()
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        self?.configureSession()
+                    } else {
+                        self?.onAvailabilityChange?(.denied)
+                    }
+                }
+            }
+        case .denied, .restricted:
+            onAvailabilityChange?(.denied)
+        @unknown default:
+            onAvailabilityChange?(.denied)
+        }
+    }
+
+    private func configureSession() {
+        // No camera hardware at all (e.g. iOS Simulator without a mapped webcam) — report it
+        // explicitly instead of leaving a permanently blank/black view with no explanation.
         guard let device = AVCaptureDevice.default(for: .video),
               let input = try? AVCaptureDeviceInput(device: device),
-              session.canAddInput(input) else { return }
+              session.canAddInput(input) else {
+            onAvailabilityChange?(.noCameraHardware)
+            return
+        }
         session.addInput(input)
 
         let output = AVCaptureMetadataOutput()
-        guard session.canAddOutput(output) else { return }
+        guard session.canAddOutput(output) else {
+            onAvailabilityChange?(.noCameraHardware)
+            return
+        }
         session.addOutput(output)
         output.setMetadataObjectsDelegate(self, queue: .main)
         output.metadataObjectTypes = [.qr]
@@ -114,6 +212,8 @@ final class ScannerViewController: UIViewController, AVCaptureMetadataOutputObje
         preview.frame = view.bounds
         preview.videoGravity = .resizeAspectFill
         view.layer.addSublayer(preview)
+
+        onAvailabilityChange?(.ready)
 
         DispatchQueue.global(qos: .userInitiated).async { [session] in
             session.startRunning()

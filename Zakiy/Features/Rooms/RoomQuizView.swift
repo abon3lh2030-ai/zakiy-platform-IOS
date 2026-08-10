@@ -119,53 +119,17 @@ struct RoomQuizView: View {
 private struct RoomChatSheet: View {
     @Bindable var socket: RoomSocketManager
     @Environment(\.dismiss) private var dismiss
-    @State private var input = ""
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 10) {
-                            ForEach(socket.chatMessages) { message in
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(message.name).font(.caption.bold()).foregroundStyle(Color.accentColor)
-                                    Text(message.message).font(.subheadline)
-                                }
-                                .id(message.id)
-                            }
-                        }
-                        .padding()
-                    }
-                    .onChange(of: socket.chatMessages.count) {
-                        if let last = socket.chatMessages.last {
-                            withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
-                        }
+            RoomChatBody(socket: socket)
+                .navigationTitle(Loc.t("chat"))
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(Loc.t("close")) { dismiss() }
                     }
                 }
-                Divider()
-                HStack {
-                    TextField(Loc.t("type_a_message"), text: $input)
-                        .textFieldStyle(.roundedBorder)
-                    Button {
-                        let text = input.trimmingCharacters(in: .whitespaces)
-                        guard !text.isEmpty else { return }
-                        socket.sendChatMessage(text)
-                        input = ""
-                    } label: {
-                        Image(systemName: "paperplane.fill")
-                    }
-                }
-                .padding()
-            }
-            .background(Color.appBackground)
-            .navigationTitle(Loc.t("chat"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(Loc.t("close")) { dismiss() }
-                }
-            }
         }
     }
 }

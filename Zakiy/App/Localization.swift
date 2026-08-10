@@ -273,6 +273,9 @@ enum Loc {
         "waiting_for_host": "بانتظار المضيف",
         "weak_topics": "نقاط تحتاج مراجعة",
         "your_score_format": "درجتك: %d من %d",
+        "camera_permission_denied": "لازم تسمح باستخدام الكاميرا عشان تمسح رمز QR",
+        "camera_unavailable": "الكاميرا غير متوفرة على هذا الجهاز",
+        "open_settings": "افتح الإعدادات",
     ]
 
     static let en: [String: String] = [
@@ -538,5 +541,8 @@ enum Loc {
         "waiting_for_host": "Waiting for host",
         "weak_topics": "Needs Review",
         "your_score_format": "Your score: %d/%d",
+        "camera_permission_denied": "Camera access is needed to scan a QR code",
+        "camera_unavailable": "Camera isn't available on this device",
+        "open_settings": "Open Settings",
     ]
 }
