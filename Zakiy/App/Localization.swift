@@ -295,6 +295,7 @@ enum Loc {
         "billing_period": "الفترة",
         "current_plan_badge": "باقتك الحالية",
         "restore_purchases": "استعادة المشتريات",
+        "return_to_room": "الرجوع للغرفة",
     ]
 
     static let en: [String: String] = [
@@ -582,5 +583,6 @@ enum Loc {
         "billing_period": "Period",
         "current_plan_badge": "Your Current Plan",
         "restore_purchases": "Restore Purchases",
+        "return_to_room": "Return to Room",
     ]
 }

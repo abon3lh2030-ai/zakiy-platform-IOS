@@ -50,7 +50,10 @@ struct ProfileView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if isOwnProfile {
-                ToolbarItem(placement: .topBarLeading) {
+                // .topBarTrailing, not .topBarLeading — "leading" is direction-aware and in our
+                // RTL app resolves to the physical right edge, which crowded it right next to the
+                // title. .trailing puts it on the actual physical left, as requested.
+                ToolbarItem(placement: .topBarTrailing) {
                     Button(Loc.t("edit")) { showEditProfile = true }
                 }
             }

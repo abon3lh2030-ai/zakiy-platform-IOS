@@ -10,15 +10,15 @@ struct ClassroomView: View {
     @State private var showChat = false
     @State private var showParticipants = false
     @State private var showQuizSetup = false
-
-    private var isQuizActive: Bool {
-        socket.roomState.quiz != nil && socket.roomState.quizStartedAt != nil
-    }
+    /// A local flag, not a computed check of `quiz != nil && quizStartedAt != nil` — the server
+    /// state stays "quiz active" forever once a quiz starts, so a computed check would make
+    /// "return to room" impossible (it'd just swap right back to the quiz).
+    @State private var isViewingQuizPlay = false
 
     var body: some View {
         Group {
-            if isQuizActive {
-                RoomQuizPlayView(socket: socket)
+            if isViewingQuizPlay {
+                RoomQuizPlayView(socket: socket) { isViewingQuizPlay = false }
             } else if !socket.roomState.classStarted && !socket.roomState.isHost {
                 waitingForHost
             } else {
@@ -31,9 +31,11 @@ struct ClassroomView: View {
             // "ابدأ اختبار" button also competing for space, too many separate toolbar items can
             // still get silently collapsed by iOS into a dead-looking overflow glyph. A Menu is
             // one guaranteed-interactive item regardless of how much room is left.
-            if !isQuizActive {
+            if !isViewingQuizPlay {
                 if socket.roomState.canManageContent {
-                    ToolbarItem(placement: .topBarLeading) {
+                    // .topBarTrailing, not .topBarLeading — "leading" resolves to the physical
+                    // right edge in our RTL app; .trailing puts it on the actual physical left.
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button(Loc.t("start_quiz")) { showQuizSetup = true }
                     }
                 }
@@ -66,6 +68,17 @@ struct ClassroomView: View {
         .sheet(isPresented: $showQuizSetup) {
             RoomStudySetupSheet(socket: socket) { questions, duration in
                 socket.startQuiz(questions, durationMinutes: duration)
+            }
+        }
+        .onChange(of: socket.roomState.quizStartedAt) { oldValue, newValue in
+            if oldValue == nil, newValue != nil { isViewingQuizPlay = true }
+        }
+        .onChange(of: socket.roomState.roomCode) { _, newCode in
+            // Covers reconnecting mid-quiz: quizStartedAt is already set in the very first
+            // room_state snapshot (arrives asynchronously), so the onChange above alone misses it.
+            guard !newCode.isEmpty else { return }
+            if socket.roomState.quiz != nil, socket.roomState.quizStartedAt != nil {
+                isViewingQuizPlay = true
             }
         }
     }
@@ -176,17 +189,36 @@ private struct ClassroomParticipantsSheet: View {
     @Bindable var socket: RoomSocketManager
     @Environment(\.dismiss) private var dismiss
 
+    // Once anyone has quiz results, show the list ranked with medals for the top 3 instead of
+    // the plain roster — this is how everyone in a classroom (not just whoever is still on the
+    // quiz results screen) gets to see how the embedded quiz turned out.
+    private var hasAnyFinishedResults: Bool { socket.leaderboard.contains { $0.finished } }
+    private var orderedParticipants: [RoomParticipant] {
+        hasAnyFinishedResults ? socket.leaderboard.sorted { $0.score > $1.score } : socket.leaderboard
+    }
+
     var body: some View {
         NavigationStack {
-            List(socket.leaderboard) { participant in
+            List(Array(orderedParticipants.enumerated()), id: \.element.id) { index, participant in
                 HStack {
-                    Image(systemName: participant.inVoice ? "mic.fill" : "person.fill")
-                        .foregroundStyle(.secondary)
+                    if hasAnyFinishedResults {
+                        Text(medal(for: index)).font(.subheadline).frame(width: 24)
+                    } else {
+                        Image(systemName: participant.inVoice ? "mic.fill" : "person.fill")
+                            .foregroundStyle(.secondary)
+                    }
                     Text(participant.name)
                     if participant.isCoHost {
                         Image(systemName: "star.fill").font(.caption2).foregroundStyle(Color.accentColor)
                     }
                     Spacer()
+                    if hasAnyFinishedResults {
+                        if participant.finished {
+                            Text("\(participant.score)/\(participant.total)").foregroundStyle(.secondary)
+                        } else {
+                            ProgressView().controlSize(.small)
+                        }
+                    }
                 }
             }
             .navigationTitle(String(format: Loc.t("participants_count"), socket.leaderboard.count))
@@ -196,6 +228,15 @@ private struct ClassroomParticipantsSheet: View {
                     Button(Loc.t("close")) { dismiss() }
                 }
             }
+        }
+    }
+
+    private func medal(for rank: Int) -> String {
+        switch rank {
+        case 0: return "🥇"
+        case 1: return "🥈"
+        case 2: return "🥉"
+        default: return "\(rank + 1)."
         }
     }
 }

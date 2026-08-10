@@ -90,18 +90,22 @@ struct FriendsListView: View {
                             } else {
                                 ForEach(friends) { friend in
                                     HStack {
+                                        // Name first in the HStack so it lands on the right in
+                                        // RTL (leading edge), delete button last so it lands on
+                                        // the left (trailing edge) — matches every other row's
+                                        // "content right, action left" layout on this screen.
+                                        NavigationLink {
+                                            ProfileView(userId: friend.userId)
+                                        } label: {
+                                            Text(friend.username).foregroundStyle(.primary)
+                                        }
+                                        Spacer()
                                         Button(Loc.t("delete"), role: .destructive) {
                                             removeTarget = friend
                                         }
                                         .buttonStyle(.bordered)
                                         .tint(.red)
                                         .controlSize(.small)
-                                        Spacer()
-                                        NavigationLink {
-                                            ProfileView(userId: friend.userId)
-                                        } label: {
-                                            Text(friend.username)
-                                        }
                                     }
                                     .padding(.vertical, 4)
                                     if friend.id != friends.last?.id { Divider() }
@@ -169,18 +173,18 @@ struct FriendsListView: View {
         VStack(spacing: 0) {
             Button { showMyQR = true } label: {
                 HStack {
-                    Text(Loc.t("my_qr_code")).foregroundStyle(Color.accentColor)
+                    Text(Loc.t("my_qr_code")).foregroundStyle(Color.appLinkText)
                     Spacer()
-                    Image(systemName: "qrcode").foregroundStyle(Color.accentColor)
+                    Image(systemName: "qrcode").foregroundStyle(Color.appLinkText)
                 }
                 .padding()
             }
             Divider().padding(.horizontal)
             Button { showScanner = true } label: {
                 HStack {
-                    Text(Loc.t("scan_qr_code")).foregroundStyle(Color.accentColor)
+                    Text(Loc.t("scan_qr_code")).foregroundStyle(Color.appLinkText)
                     Spacer()
-                    Image(systemName: "qrcode.viewfinder").foregroundStyle(Color.accentColor)
+                    Image(systemName: "qrcode.viewfinder").foregroundStyle(Color.appLinkText)
                 }
                 .padding()
             }

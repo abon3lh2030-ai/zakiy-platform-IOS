@@ -2,6 +2,10 @@ import SwiftUI
 
 struct RoomQuizPlayView: View {
     @Bindable var socket: RoomSocketManager
+    /// Pops back to the room's normal view (participants/whiteboard) — a plain system back
+    /// button won't do this reliably since the room's "quiz active" state is server-driven and
+    /// would just push the quiz screen right back onto the stack.
+    let onReturnToRoom: () -> Void
 
     @State private var currentIndex = 0
     @State private var selectedOption: Int?
@@ -85,7 +89,9 @@ struct RoomQuizPlayView: View {
                     Text(Loc.t("leaderboard")).font(.headline)
                     ForEach(Array(sortedLeaderboard.enumerated()), id: \.offset) { index, participant in
                         HStack {
-                            Text("\(index + 1).").foregroundStyle(.secondary)
+                            Text(medal(for: index))
+                                .font(.subheadline)
+                                .frame(width: 24)
                             Text(participant.name)
                             Spacer()
                             if participant.finished {
@@ -100,6 +106,16 @@ struct RoomQuizPlayView: View {
                 }
                 .padding()
                 .background(Color.appCard, in: RoundedRectangle(cornerRadius: 14))
+
+                // Everyone finishes at their own pace, so this button doesn't wait for the rest
+                // of the room — it just takes you back to the shared room view where the live
+                // leaderboard above keeps updating for everyone as others finish too.
+                Button {
+                    onReturnToRoom()
+                } label: {
+                    Text(Loc.t("return_to_room")).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.appPrimary)
             }
             .padding()
         }
@@ -107,6 +123,15 @@ struct RoomQuizPlayView: View {
 
     private var sortedLeaderboard: [RoomParticipant] {
         socket.leaderboard.sorted { $0.score > $1.score }
+    }
+
+    private func medal(for rank: Int) -> String {
+        switch rank {
+        case 0: return "🥇"
+        case 1: return "🥈"
+        case 2: return "🥉"
+        default: return "\(rank + 1)."
+        }
     }
 
     private func submitAnswer(for question: QuizQuestion) {
