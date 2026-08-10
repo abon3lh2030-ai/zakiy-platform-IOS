@@ -11,8 +11,8 @@ enum Loc {
     }
 
     static let ar: [String: String] = [
-        "app_name": "ذكيّ",
-        "welcome_title": "أهلًا بك في ذكيّ",
+        "app_name": "ذكّي",
+        "welcome_title": "أهلًا بك في ذكّي",
         "welcome_subtitle": "منصة مذاكرة جماعية بمساعدة الذكاء الاصطناعي",
         "login": "تسجيل الدخول",
         "signup": "إنشاء حساب",
@@ -39,7 +39,7 @@ enum Loc {
         "room_type_quiz": "غرفة جماعية",
         "summary": "الملخص",
         "quiz": "الاختبار",
-        "chat_assistant": "اسأل ذكيّ",
+        "chat_assistant": "اسأل ذكّي",
         "create_room": "أنشئ غرفة",
         "join_room": "عندي كود",
         "room_code": "كود الغرفة",
@@ -151,7 +151,7 @@ enum Loc {
         "num_questions_label": "عدد الأسئلة: %d",
         "quiz_duration_label": "مدة الاختبار: %d د",
         "invite_friends": "ادع أصدقاء",
-        "share_room_invite_text": "انضم لغرفتي بذكيّ! الكود: %@",
+        "share_room_invite_text": "انضم لغرفتي بذكّي! الكود: %@",
         "room_code_label": "كود الغرفة: %@",
         "participants_title": "المشاركين",
         "participants_section": "المشاركين",
@@ -203,7 +203,7 @@ enum Loc {
         "bio": "نبذة عنك",
         "bio_placeholder": "اكتب نبذة بسيطة عنك...",
         "chat": "المحادثة",
-        "chat_with_ai": "اسأل ذكيّ",
+        "chat_with_ai": "اسأل ذكّي",
         "chat_with_ai_subtitle": "اسأل عن أي شي بالملف",
         "close": "إغلاق",
         "co_host_badge": "مساعد",
