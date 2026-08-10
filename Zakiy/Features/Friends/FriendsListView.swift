@@ -54,7 +54,7 @@ struct FriendsListView: View {
                                         .tint(.accentColor)
                                         .controlSize(.small)
                                     }
-                                    .padding(.vertical, 4)
+                                    .padding(.vertical, 10)
                                     if invite.id != sessionInvites.last?.id { Divider() }
                                 }
                             }
@@ -78,7 +78,7 @@ struct FriendsListView: View {
                                         .buttonStyle(.bordered)
                                         .controlSize(.small)
                                     }
-                                    .padding(.vertical, 4)
+                                    .padding(.vertical, 10)
                                     if req.id != incomingRequests.last?.id { Divider() }
                                 }
                             }
@@ -94,11 +94,17 @@ struct FriendsListView: View {
                                         // RTL (leading edge), delete button last so it lands on
                                         // the left (trailing edge) — matches every other row's
                                         // "content right, action left" layout on this screen.
+                                        //
+                                        // .foregroundStyle(.primary) has to sit on the
+                                        // NavigationLink itself, not on the Text inside its
+                                        // label — set on the inner Text, the link's own tint
+                                        // silently overrides it and the name renders gold anyway.
                                         NavigationLink {
                                             ProfileView(userId: friend.userId)
                                         } label: {
-                                            Text(friend.username).foregroundStyle(.primary)
+                                            Text(friend.username)
                                         }
+                                        .foregroundStyle(.primary)
                                         Spacer()
                                         Button(Loc.t("delete"), role: .destructive) {
                                             removeTarget = friend
@@ -107,7 +113,7 @@ struct FriendsListView: View {
                                         .tint(.red)
                                         .controlSize(.small)
                                     }
-                                    .padding(.vertical, 4)
+                                    .padding(.vertical, 10)
                                     if friend.id != friends.last?.id { Divider() }
                                 }
                             }
