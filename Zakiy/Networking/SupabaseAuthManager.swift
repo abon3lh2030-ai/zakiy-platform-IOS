@@ -55,7 +55,13 @@ final class SupabaseAuthManager {
         ]
         let response = try await client.auth.signUp(email: email, password: password, data: metadata)
         session = response.session
-        if response.session != nil { AppSettings.shared.isGuest = false }
+        if response.session != nil {
+            AppSettings.shared.isGuest = false
+            // Creates the searchable `profiles` row up front — without this, a brand-new user
+            // can't be found by friend search until they happen to open their own profile page
+            // (which lazily creates it server-side) or edit it manually.
+            try? await APIClient.shared.syncProfile(username: username)
+        }
         return response.session != nil
     }
 

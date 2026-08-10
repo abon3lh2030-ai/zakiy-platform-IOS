@@ -92,19 +92,26 @@ final class APIClient {
     }
 
     func generateQuizRaw(text: String, numQuestions: Int, lang: String) async throws -> String {
-        var request = authorizedRequest("/api/quiz", method: "POST")
+        var request = authorizedRequest("/api/generate-quiz", method: "POST")
         jsonBody(&request, ["text": text, "num_questions": numQuestions, "lang": lang])
-        struct QuizResponse: Decodable { let quiz: String }
+        struct QuizResponse: Decodable { let quizRaw: String; enum CodingKeys: String, CodingKey { case quizRaw = "quiz_raw" } }
         let result: QuizResponse = try await send(request)
-        return result.quiz
+        return result.quizRaw
     }
 
-    func chat(text: String, question: String, history: [[String: String]]) async throws -> String {
+    /// The backend threads a conversation via a server-side `interaction_id` (pass the one from
+    /// the previous reply to continue the same thread) rather than us resending full history.
+    /// `context`/`name` are only used to seed the very first turn (`interactionId == nil`).
+    func chat(message: String, context: String?, name: String?, interactionId: String?, lang: String) async throws -> (reply: String, interactionId: String) {
         var request = authorizedRequest("/api/chat", method: "POST")
-        jsonBody(&request, ["text": text, "question": question, "history": history])
-        struct ChatResponse: Decodable { let answer: String }
+        var payload: [String: Any] = ["message": message, "lang": lang]
+        if let interactionId { payload["interaction_id"] = interactionId }
+        if let context { payload["context"] = context }
+        if let name { payload["name"] = name }
+        jsonBody(&request, payload)
+        struct ChatResponse: Decodable { let reply: String; let interactionId: String; enum CodingKeys: String, CodingKey { case reply; case interactionId = "interaction_id" } }
         let result: ChatResponse = try await send(request)
-        return result.answer
+        return (result.reply, result.interactionId)
     }
 
     func libraryBooks() async throws -> [LibraryBook] {
@@ -228,10 +235,10 @@ final class APIClient {
     }
 
     func createRoom(roomType: String) async throws -> String {
-        var request = authorizedRequest("/api/rooms", method: "POST")
+        var request = authorizedRequest("/api/room/create", method: "POST")
         jsonBody(&request, ["room_type": roomType])
-        struct Response: Decodable { let code: String }
+        struct Response: Decodable { let roomCode: String; enum CodingKeys: String, CodingKey { case roomCode = "room_code" } }
         let result: Response = try await send(request)
-        return result.code
+        return result.roomCode
     }
 }

@@ -30,6 +30,7 @@ final class RoomSocketManager {
     var typingNames: Set<String> = []
     var errorMessage: String?
     var wasKicked = false
+    var forceMutedSignal = 0
 
     static let persistentClientId: String = {
         let key = "zakiy.clientId"
@@ -121,28 +122,39 @@ final class RoomSocketManager {
     func luckyDraw() { socket?.emit("lucky_draw", ["room_code": roomState.roomCode]) }
 
     func sendBoardStroke(_ stroke: BoardStroke) {
-        var payload: [String: Any] = [
-            "room_code": roomState.roomCode,
+        var strokePayload: [String: Any] = [
             "mode": stroke.mode,
             "color": stroke.color,
         ]
-        if let points = stroke.points { payload["points"] = points }
-        if let width = stroke.width { payload["width"] = width }
-        if let text = stroke.text { payload["text"] = text }
-        if let x = stroke.x { payload["x"] = x }
-        if let y = stroke.y { payload["y"] = y }
-        if let fontSize = stroke.fontSize { payload["fontSize"] = fontSize }
-        socket?.emit("board_stroke", payload)
+        if let points = stroke.points { strokePayload["points"] = points }
+        if let width = stroke.width { strokePayload["width"] = width }
+        if let text = stroke.text { strokePayload["text"] = text }
+        if let x = stroke.x { strokePayload["x"] = x }
+        if let y = stroke.y { strokePayload["y"] = y }
+        if let fontSize = stroke.fontSize { strokePayload["fontSize"] = fontSize }
+        // The backend expects the stroke nested under a "stroke" key, not flattened into the payload.
+        socket?.emit("board_stroke", ["room_code": roomState.roomCode, "stroke": strokePayload])
     }
 
     func clearBoard() { socket?.emit("board_clear", ["room_code": roomState.roomCode]) }
 
     func emitVoiceJoin() { socket?.emit("voice_join", ["room_code": roomState.roomCode]) }
     func emitVoiceLeave() { socket?.emit("voice_leave", ["room_code": roomState.roomCode]) }
-    func emitVoiceSignal(to targetSid: String, type: String, payload: [String: Any]) {
-        var body: [String: Any] = ["room_code": roomState.roomCode, "target_sid": targetSid, "type": type]
-        for (k, v) in payload { body[k] = v }
-        socket?.emit("voice_signal", body)
+
+    /// Voice signaling uses three distinct backend events (not a single generic one) — the
+    /// server relays each payload opaquely to `to_sid`, so only the two ends of our own
+    /// WebRTC manager need to agree on the shape of `offer`/`answer`/`candidate`.
+    func emitVoiceOffer(to targetSid: String, sdp: String) {
+        socket?.emit("voice_offer", ["to_sid": targetSid, "offer": ["type": "offer", "sdp": sdp]])
+    }
+    func emitVoiceAnswer(to targetSid: String, sdp: String) {
+        socket?.emit("voice_answer", ["to_sid": targetSid, "answer": ["type": "answer", "sdp": sdp]])
+    }
+    func emitVoiceIceCandidate(to targetSid: String, candidate: String, sdpMid: String, sdpMLineIndex: Int) {
+        socket?.emit("voice_ice_candidate", [
+            "to_sid": targetSid,
+            "candidate": ["candidate": candidate, "sdpMid": sdpMid, "sdpMLineIndex": sdpMLineIndex],
+        ])
     }
 
     func onVoiceEvent(_ event: String, handler: @escaping ([String: Any]) -> Void) {
@@ -197,13 +209,19 @@ final class RoomSocketManager {
                 if let quizArray = dict["quiz"] as? [[String: Any]] {
                     self?.roomState.quiz = quizArray.compactMap(Self.decodeQuizQuestion)
                 }
-                self?.roomState.quizStartedAt = dict["quiz_started_at"] as? Double
+                // The backend names this field "started_at" in the quiz_started event
+                // (it's "quiz_started_at" only inside the room_state snapshot payload).
+                self?.roomState.quizStartedAt = dict["started_at"] as? Double
                 self?.roomState.durationMinutes = dict["duration_minutes"] as? Double
             }
         }
 
         socket.on("kicked") { [weak self] _, _ in
             Task { @MainActor in self?.wasKicked = true }
+        }
+
+        socket.on("force_muted") { [weak self] _, _ in
+            Task { @MainActor in self?.forceMutedSignal += 1 }
         }
 
         socket.on("class_started_event") { [weak self] _, _ in
@@ -221,7 +239,10 @@ final class RoomSocketManager {
         }
 
         socket.on("board_stroke") { [weak self] data, _ in
-            guard let dict = data.first as? [String: Any], let stroke = Self.decodeStroke(dict) else { return }
+            // The backend echoes the stroke back nested under a "stroke" key, matching what we send.
+            guard let dict = data.first as? [String: Any],
+                  let strokeDict = dict["stroke"] as? [String: Any],
+                  let stroke = Self.decodeStroke(strokeDict) else { return }
             Task { @MainActor in self?.roomState.boardStrokes.append(stroke) }
         }
 

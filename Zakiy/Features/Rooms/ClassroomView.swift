@@ -8,6 +8,7 @@ struct ClassroomView: View {
     @State private var showInvite = false
     @State private var showChat = false
     @State private var showParticipants = false
+    @State private var luckyDrawWinner: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -61,6 +62,15 @@ struct ClassroomView: View {
         }
         .sheet(isPresented: $showParticipants) {
             ClassroomParticipantsSheet(socket: socket)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .init("zakiy.socket.lucky_draw_result"))) { notification in
+            guard let dict = notification.object as? [String: Any], let name = dict["winner_name"] as? String else { return }
+            luckyDrawWinner = name
+        }
+        .alert(Loc.t("lucky_draw"), isPresented: .constant(luckyDrawWinner != nil)) {
+            Button(Loc.t("ok"), role: .cancel) { luckyDrawWinner = nil }
+        } message: {
+            Text(String(format: Loc.t("lucky_draw_winner"), luckyDrawWinner ?? ""))
         }
     }
 

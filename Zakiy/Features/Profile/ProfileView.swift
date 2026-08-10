@@ -61,8 +61,10 @@ struct ProfileView: View {
                                 Text(Loc.t("add_friend")).frame(maxWidth: .infinity)
                             }
                             .buttonStyle(.appPrimary)
-                        } else if profile.friendStatus == "pending" {
+                        } else if profile.friendStatus == "pending_sent" {
                             Text(Loc.t("friend_request_sent")).foregroundStyle(.secondary)
+                        } else if profile.friendStatus == "pending_received" {
+                            Text(Loc.t("incoming_request_notice")).foregroundStyle(.secondary)
                         } else if profile.friendStatus == "friends" {
                             Label(Loc.t("friends"), systemImage: "checkmark.circle.fill").foregroundStyle(Color.accentColor)
                         }

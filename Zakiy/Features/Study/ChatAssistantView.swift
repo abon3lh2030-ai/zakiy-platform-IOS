@@ -3,9 +3,13 @@ import SwiftUI
 struct ChatAssistantView: View {
     let sourceText: String
 
+    @Environment(SupabaseAuthManager.self) private var auth
+    @Environment(AppSettings.self) private var settings
+
     @State private var messages: [ChatMessage] = []
     @State private var input = ""
     @State private var isSending = false
+    @State private var interactionId: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -63,11 +67,16 @@ struct ChatAssistantView: View {
         messages.append(ChatMessage(role: .user, text: text))
         isSending = true
         do {
-            let history: [[String: String]] = messages.dropLast().map {
-                ["role": $0.role == .user ? "user" : "assistant", "content": $0.text]
-            }
-            let reply = try await APIClient.shared.chat(text: sourceText, question: text, history: history)
-            messages.append(ChatMessage(role: .assistant, text: reply))
+            let name = auth.isAuthenticated ? auth.username : nil
+            let result = try await APIClient.shared.chat(
+                message: text,
+                context: interactionId == nil ? sourceText : nil,
+                name: interactionId == nil ? name : nil,
+                interactionId: interactionId,
+                lang: settings.languageCode
+            )
+            interactionId = result.interactionId
+            messages.append(ChatMessage(role: .assistant, text: result.reply))
         } catch {
             messages.append(ChatMessage(role: .assistant, text: Loc.t("error_generic")))
         }

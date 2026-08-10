@@ -59,5 +59,8 @@ struct VoiceBarView: View {
         .background(Color.appCard)
         .onAppear { voice.attach(socket: socket) }
         .onDisappear { if voice.isInVoice { voice.leaveVoice() } }
+        .onChange(of: socket.forceMutedSignal) { _, _ in
+            if voice.isInVoice { voice.applyForceMute() }
+        }
     }
 }

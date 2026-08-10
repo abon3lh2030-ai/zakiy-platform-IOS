@@ -59,21 +59,37 @@ final class WebRTCVoiceManager {
     func attach(socket: RoomSocketManager) {
         self.socket = socket
 
-        socket.onVoiceEvent("voice_peers") { [weak self] data in
-            guard let peers = data["peers"] as? [String] else { return }
-            Task { @MainActor in self?.connectToExistingPeers(peers) }
+        // Real backend protocol (socket.io handlers in app.py): the newly-joining peer receives
+        // the existing roster and initiates an offer to each; peers already in voice just wait
+        // for that offer to arrive rather than also initiating one themselves (avoids glare).
+        socket.onVoiceEvent("voice_existing_peers") { [weak self] data in
+            guard let peers = data["peers"] as? [[String: Any]] else { return }
+            let sids = peers.compactMap { $0["sid"] as? String }
+            Task { @MainActor in self?.connectToExistingPeers(sids) }
         }
-        socket.onVoiceEvent("voice_user_joined") { [weak self] data in
-            guard let sid = data["sid"] as? String else { return }
-            Task { @MainActor in self?.createPeerConnection(for: sid, isOfferer: true) }
-        }
-        socket.onVoiceEvent("voice_user_left") { [weak self] data in
+        socket.onVoiceEvent("voice_peer_left") { [weak self] data in
             guard let sid = data["sid"] as? String else { return }
             Task { @MainActor in self?.removePeer(sid) }
         }
-        socket.onVoiceEvent("voice_signal") { [weak self] data in
-            guard let fromSid = data["from_sid"] as? String, let type = data["type"] as? String else { return }
-            Task { @MainActor in self?.handleSignal(from: fromSid, type: type, data: data) }
+        socket.onVoiceEvent("voice_offer") { [weak self] data in
+            guard let fromSid = data["from_sid"] as? String,
+                  let offer = data["offer"] as? [String: Any],
+                  let sdp = offer["sdp"] as? String else { return }
+            Task { @MainActor in self?.handleOffer(from: fromSid, sdp: sdp) }
+        }
+        socket.onVoiceEvent("voice_answer") { [weak self] data in
+            guard let fromSid = data["from_sid"] as? String,
+                  let answer = data["answer"] as? [String: Any],
+                  let sdp = answer["sdp"] as? String else { return }
+            Task { @MainActor in self?.handleAnswer(from: fromSid, sdp: sdp) }
+        }
+        socket.onVoiceEvent("voice_ice_candidate") { [weak self] data in
+            guard let fromSid = data["from_sid"] as? String,
+                  let candidateDict = data["candidate"] as? [String: Any],
+                  let candidateString = candidateDict["candidate"] as? String,
+                  let sdpMid = candidateDict["sdpMid"] as? String,
+                  let sdpMLineIndex = candidateDict["sdpMLineIndex"] as? Int else { return }
+            Task { @MainActor in self?.handleRemoteCandidate(from: fromSid, candidateString: candidateString, sdpMid: sdpMid, sdpMLineIndex: sdpMLineIndex) }
         }
     }
 
@@ -96,6 +112,13 @@ final class WebRTCVoiceManager {
     func toggleMute() {
         isMuted.toggle()
         localAudioTrack?.isEnabled = !isMuted
+    }
+
+    /// Called when the host force-mutes us server-side — enforce it locally too (the host
+    /// can't reach into our audio track directly, only notify us via the `force_muted` event).
+    func applyForceMute() {
+        isMuted = true
+        localAudioTrack?.isEnabled = false
     }
 
     private func setupFactoryIfNeeded() {
@@ -153,54 +176,47 @@ final class WebRTCVoiceManager {
                 guard let sdp else { return }
                 connection.setLocalDescription(sdp) { _ in }
                 Task { @MainActor in
-                    self?.socket?.emitVoiceSignal(to: sid, type: "offer", payload: ["sdp": sdp.sdp])
+                    self?.socket?.emitVoiceOffer(to: sid, sdp: sdp.sdp)
                 }
             }
         }
     }
 
-    private func handleSignal(from sid: String, type: String, data: [String: Any]) {
-        switch type {
-        case "offer":
-            guard let sdpString = data["sdp"] as? String else { return }
-            createPeerConnection(for: sid, isOfferer: false)
-            guard let connection = peerConnections[sid] else { return }
-            let remoteSdp = RTCSessionDescription(type: .offer, sdp: sdpString)
-            connection.setRemoteDescription(remoteSdp) { [weak self] _ in
-                let answerConstraints = RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
-                connection.answer(for: answerConstraints) { sdp, _ in
-                    guard let sdp else { return }
-                    connection.setLocalDescription(sdp) { _ in }
-                    Task { @MainActor in
-                        self?.socket?.emitVoiceSignal(to: sid, type: "answer", payload: ["sdp": sdp.sdp])
-                    }
+    private func handleOffer(from sid: String, sdp sdpString: String) {
+        createPeerConnection(for: sid, isOfferer: false)
+        guard let connection = peerConnections[sid] else { return }
+        let remoteSdp = RTCSessionDescription(type: .offer, sdp: sdpString)
+        connection.setRemoteDescription(remoteSdp) { [weak self] _ in
+            let answerConstraints = RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
+            connection.answer(for: answerConstraints) { sdp, _ in
+                guard let sdp else { return }
+                connection.setLocalDescription(sdp) { _ in }
+                Task { @MainActor in
+                    self?.socket?.emitVoiceAnswer(to: sid, sdp: sdp.sdp)
                 }
             }
-
-        case "answer":
-            guard let sdpString = data["sdp"] as? String, let connection = peerConnections[sid] else { return }
-            let remoteSdp = RTCSessionDescription(type: .answer, sdp: sdpString)
-            connection.setRemoteDescription(remoteSdp) { _ in }
-
-        case "candidate":
-            guard let candidateString = data["candidate"] as? String,
-                  let sdpMid = data["sdpMid"] as? String,
-                  let sdpMLineIndex = data["sdpMLineIndex"] as? Int,
-                  let connection = peerConnections[sid] else { return }
-            let candidate = RTCIceCandidate(sdp: candidateString, sdpMLineIndex: Int32(sdpMLineIndex), sdpMid: sdpMid)
-            connection.add(candidate) { _ in }
-
-        default:
-            break
         }
+    }
+
+    private func handleAnswer(from sid: String, sdp sdpString: String) {
+        guard let connection = peerConnections[sid] else { return }
+        let remoteSdp = RTCSessionDescription(type: .answer, sdp: sdpString)
+        connection.setRemoteDescription(remoteSdp) { _ in }
+    }
+
+    private func handleRemoteCandidate(from sid: String, candidateString: String, sdpMid: String, sdpMLineIndex: Int) {
+        guard let connection = peerConnections[sid] else { return }
+        let candidate = RTCIceCandidate(sdp: candidateString, sdpMLineIndex: Int32(sdpMLineIndex), sdpMid: sdpMid)
+        connection.add(candidate) { _ in }
     }
 
     fileprivate func sendLocalCandidate(_ candidate: RTCIceCandidate, to sid: String) {
-        socket?.emitVoiceSignal(to: sid, type: "candidate", payload: [
-            "candidate": candidate.sdp,
-            "sdpMid": candidate.sdpMid ?? "",
-            "sdpMLineIndex": Int(candidate.sdpMLineIndex),
-        ])
+        socket?.emitVoiceIceCandidate(
+            to: sid,
+            candidate: candidate.sdp,
+            sdpMid: candidate.sdpMid ?? "",
+            sdpMLineIndex: Int(candidate.sdpMLineIndex)
+        )
     }
 
     fileprivate func handleIceConnectionChange(sid: String, state: RTCIceConnectionState) {
