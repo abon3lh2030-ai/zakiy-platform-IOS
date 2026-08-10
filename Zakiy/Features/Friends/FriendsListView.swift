@@ -39,6 +39,11 @@ struct FriendsListView: View {
                                 Text(Loc.t("session_invites_empty")).foregroundStyle(.secondary).padding(.vertical, 4)
                             } else {
                                 ForEach(sessionInvites) { invite in
+                                    // .frame(maxWidth: .infinity) on every row below — without it,
+                                    // an HStack only sizes to fit its own content, so inside the
+                                    // section's leading-aligned VStack it hugs the right (leading)
+                                    // edge and the Spacer never gets real room to push the trailing
+                                    // button out to the card's actual left edge.
                                     HStack {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(invite.fromUsername.map { String(format: Loc.t("invite_from"), $0) } ?? Loc.t("session_invites"))
@@ -54,6 +59,7 @@ struct FriendsListView: View {
                                         .tint(.accentColor)
                                         .controlSize(.small)
                                     }
+                                    .frame(maxWidth: .infinity)
                                     .padding(.vertical, 10)
                                     if invite.id != sessionInvites.last?.id { Divider() }
                                 }
@@ -78,6 +84,7 @@ struct FriendsListView: View {
                                         .buttonStyle(.bordered)
                                         .controlSize(.small)
                                     }
+                                    .frame(maxWidth: .infinity)
                                     .padding(.vertical, 10)
                                     if req.id != incomingRequests.last?.id { Divider() }
                                 }
@@ -122,6 +129,7 @@ struct FriendsListView: View {
                                         }
                                         .buttonStyle(.plain)
                                     }
+                                    .frame(maxWidth: .infinity)
                                     .padding(.vertical, 10)
                                     if friend.id != friends.last?.id { Divider() }
                                 }
@@ -153,6 +161,7 @@ struct FriendsListView: View {
                                             .buttonStyle(.bordered)
                                             .controlSize(.small)
                                         }
+                                        .frame(maxWidth: .infinity)
                                         .padding(.vertical, 6)
                                     }
                                 }
