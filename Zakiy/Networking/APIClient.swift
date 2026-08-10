@@ -250,11 +250,242 @@ final class APIClient {
         try await sendVoid(request)
     }
 
-    func createRoom(roomType: String) async throws -> String {
+    /// `classId` يربط الغرفة بفصل مدرسي (يخدم تسجيل الحضور التلقائي + إشعار
+    /// "بدأت الحصة") - الباك إند يتحقق إن صاحب الطلب فعلًا معلم هذا الفصل بالذات
+    /// قبل ما يقبل الربط، وإلا يتجاهله بصمت بدون ما يمنع إنشاء الغرفة.
+    func createRoom(roomType: String, classId: String? = nil) async throws -> String {
         var request = authorizedRequest("/api/room/create", method: "POST")
-        jsonBody(&request, ["room_type": roomType])
+        var payload: [String: Any] = ["room_type": roomType]
+        if let classId { payload["class_id"] = classId }
+        jsonBody(&request, payload)
         struct Response: Decodable { let roomCode: String; enum CodingKeys: String, CodingKey { case roomCode = "room_code" } }
         let result: Response = try await send(request)
         return result.roomCode
+    }
+
+    // MARK: - نظام إدارة حسابات المدارس (٥ أدوار)
+
+    func me() async throws -> MeResponse {
+        try await send(authorizedRequest("/api/me"))
+    }
+
+    func completePasswordChange() async throws {
+        try await sendVoid(authorizedRequest("/api/me/complete-password-change", method: "POST"))
+    }
+
+    /// لا يحتاج توكن (يُنادى قبل تسجيل الدخول) - يحوّل اسم مستخدم طالب لبريده
+    /// الاصطناعي عشان نقدر نسجّل دخوله بيه عبر Supabase (يتطلب بريد دايمًا).
+    func resolveLoginIdentifier(_ identifier: String) async throws -> String {
+        var request = URLRequest(url: APIConfig.apiBase.appendingPathComponent("/api/resolve-login-identifier"))
+        request.httpMethod = "POST"
+        jsonBody(&request, ["identifier": identifier])
+        struct Response: Decodable { let email: String }
+        let result: Response = try await send(request)
+        return result.email
+    }
+
+    // ---- Admin ----
+
+    func adminCreateSchool(name: String, adminEmail: String, maxAccounts: Int) async throws -> CreateSchoolResponse {
+        var request = authorizedRequest("/api/admin/schools", method: "POST")
+        jsonBody(&request, ["name": name, "admin_email": adminEmail, "max_accounts": maxAccounts])
+        return try await send(request)
+    }
+
+    func adminSchools() async throws -> [School] {
+        struct Response: Decodable { let schools: [School] }
+        let result: Response = try await send(authorizedRequest("/api/admin/schools"))
+        return result.schools
+    }
+
+    func adminSetSchoolActive(id: String, isActive: Bool) async throws {
+        var request = authorizedRequest("/api/admin/schools/\(id)", method: "PATCH")
+        jsonBody(&request, ["is_active": isActive])
+        try await sendVoid(request)
+    }
+
+    func adminResetSchoolAdminPassword(schoolId: String) async throws -> GeneratedCredentials {
+        try await send(authorizedRequest("/api/admin/schools/\(schoolId)/reset-admin-password", method: "POST"))
+    }
+
+    // ---- School Admin / School Administration ----
+
+    func schoolInfo() async throws -> SchoolInfo {
+        try await send(authorizedRequest("/api/school/info"))
+    }
+
+    func schoolAddTeacher(name: String, email: String) async throws -> GeneratedCredentials {
+        var request = authorizedRequest("/api/school/teachers", method: "POST")
+        jsonBody(&request, ["name": name, "email": email])
+        return try await send(request)
+    }
+
+    func schoolTeachers() async throws -> [TeacherSummary] {
+        struct Response: Decodable { let teachers: [TeacherSummary] }
+        let result: Response = try await send(authorizedRequest("/api/school/teachers"))
+        return result.teachers
+    }
+
+    func schoolDeleteAccount(userId: String) async throws {
+        try await sendVoid(authorizedRequest("/api/school/accounts/\(userId)", method: "DELETE"))
+    }
+
+    func schoolCreateClass(name: String, teacherId: String?) async throws -> SchoolClass {
+        var request = authorizedRequest("/api/school/classes", method: "POST")
+        var payload: [String: Any] = ["name": name]
+        if let teacherId { payload["teacher_id"] = teacherId }
+        jsonBody(&request, payload)
+        return try await send(request)
+    }
+
+    func schoolClasses() async throws -> [SchoolClass] {
+        struct Response: Decodable { let classes: [SchoolClass] }
+        let result: Response = try await send(authorizedRequest("/api/school/classes"))
+        return result.classes
+    }
+
+    func schoolReassignClassTeacher(classId: String, teacherId: String?) async throws {
+        var request = authorizedRequest("/api/school/classes/\(classId)", method: "PATCH")
+        jsonBody(&request, ["teacher_id": teacherId as Any])
+        try await sendVoid(request)
+    }
+
+    func schoolDeleteClass(classId: String) async throws {
+        try await sendVoid(authorizedRequest("/api/school/classes/\(classId)", method: "DELETE"))
+    }
+
+    func schoolAddSchedule(classId: String, dayOfWeek: Int, startTime: String, endTime: String, subject: String) async throws {
+        var request = authorizedRequest("/api/school/classes/\(classId)/schedule", method: "POST")
+        jsonBody(&request, ["day_of_week": dayOfWeek, "start_time": startTime, "end_time": endTime, "subject": subject])
+        try await sendVoid(request)
+    }
+
+    func schoolClassSchedule(classId: String) async throws -> [ClassScheduleEntry] {
+        struct Response: Decodable { let schedule: [ClassScheduleEntry] }
+        let result: Response = try await send(authorizedRequest("/api/school/classes/\(classId)/schedule"))
+        return result.schedule
+    }
+
+    func schoolDeleteSchedule(id: String) async throws {
+        try await sendVoid(authorizedRequest("/api/school/schedule/\(id)", method: "DELETE"))
+    }
+
+    func schoolBulkAddStudents(classId: String, names: [String]) async throws -> [GeneratedStudent] {
+        var request = authorizedRequest("/api/school/students/bulk", method: "POST")
+        jsonBody(&request, ["class_id": classId, "names": names])
+        let result: BulkAddResponse = try await send(request)
+        return result.students
+    }
+
+    func schoolStudents(classId: String? = nil) async throws -> [SchoolStudent] {
+        var path = "/api/school/students"
+        if let classId { path += "?class_id=\(classId)" }
+        struct Response: Decodable { let students: [SchoolStudent] }
+        let result: Response = try await send(authorizedRequest(path))
+        return result.students
+    }
+
+    func schoolProfile(userId: String) async throws -> InstitutionalProfile {
+        try await send(authorizedRequest("/api/school/profile/\(userId)"))
+    }
+
+    func schoolAttendance(classId: String? = nil) async throws -> SchoolAttendanceReport {
+        var path = "/api/school/attendance"
+        if let classId { path += "?class_id=\(classId)" }
+        return try await send(authorizedRequest(path))
+    }
+
+    func schoolBroadcast(body: String) async throws -> Int {
+        var request = authorizedRequest("/api/school/broadcast", method: "POST")
+        jsonBody(&request, ["body": body])
+        struct Response: Decodable { let sentTo: Int; enum CodingKeys: String, CodingKey { case sentTo = "sent_to" } }
+        let result: Response = try await send(request)
+        return result.sentTo
+    }
+
+    // ---- Teacher ----
+
+    func teacherRoster() async throws -> TeacherRosterResponse {
+        try await send(authorizedRequest("/api/teacher/roster"))
+    }
+
+    func teacherStudentProfile(userId: String) async throws -> InstitutionalProfile {
+        try await send(authorizedRequest("/api/teacher/students/\(userId)"))
+    }
+
+    func teacherPerformance(classId: String? = nil) async throws -> [TeacherPerformanceRow] {
+        var path = "/api/teacher/performance"
+        if let classId { path += "?class_id=\(classId)" }
+        let result: TeacherPerformanceResponse = try await send(authorizedRequest(path))
+        return result.performance
+    }
+
+    func teacherSchedule() async throws -> TeacherScheduleResponse {
+        try await send(authorizedRequest("/api/teacher/schedule"))
+    }
+
+    func teacherAttendance(classId: String? = nil) async throws -> [SessionAttendanceRow] {
+        var path = "/api/teacher/attendance"
+        if let classId { path += "?class_id=\(classId)" }
+        let result: TeacherAttendanceResponse = try await send(authorizedRequest(path))
+        return result.attendance
+    }
+
+    func teacherManualAttendance(classId: String, date: String) async throws -> [ManualAttendanceRecord] {
+        struct Response: Decodable { let records: [ManualAttendanceRecord] }
+        let result: Response = try await send(authorizedRequest("/api/teacher/attendance/manual?class_id=\(classId)&date=\(date)"))
+        return result.records
+    }
+
+    func teacherSaveManualAttendance(classId: String, date: String, records: [(studentId: String, status: String)]) async throws {
+        var request = authorizedRequest("/api/teacher/attendance/manual", method: "POST")
+        let recordsPayload = records.map { ["student_id": $0.studentId, "status": $0.status] }
+        jsonBody(&request, ["class_id": classId, "date": date, "records": recordsPayload])
+        try await sendVoid(request)
+    }
+
+    func teacherBroadcast(body: String, classId: String? = nil) async throws -> Int {
+        var request = authorizedRequest("/api/teacher/broadcast", method: "POST")
+        var payload: [String: Any] = ["body": body]
+        if let classId { payload["class_id"] = classId }
+        jsonBody(&request, payload)
+        struct Response: Decodable { let sentTo: Int; enum CodingKeys: String, CodingKey { case sentTo = "sent_to" } }
+        let result: Response = try await send(request)
+        return result.sentTo
+    }
+
+    // ---- Student ----
+
+    func studentSchedule() async throws -> [ClassScheduleEntry] {
+        let result: StudentScheduleResponse = try await send(authorizedRequest("/api/student/schedule"))
+        return result.schedule
+    }
+
+    // ---- رسائل مباشرة + تنبيهات (لأي مستخدم مسجّل دخول) ----
+
+    func conversations() async throws -> [ConversationSummary] {
+        struct Response: Decodable { let conversations: [ConversationSummary] }
+        let result: Response = try await send(authorizedRequest("/api/messages/conversations"))
+        return result.conversations
+    }
+
+    func messageThread(otherUserId: String) async throws -> [DirectMessage] {
+        struct Response: Decodable { let messages: [DirectMessage] }
+        let result: Response = try await send(authorizedRequest("/api/messages/thread/\(otherUserId)"))
+        return result.messages
+    }
+
+    func sendMessage(recipientId: String, body: String) async throws {
+        var request = authorizedRequest("/api/messages/send", method: "POST")
+        jsonBody(&request, ["recipient_id": recipientId, "body": body])
+        try await sendVoid(request)
+    }
+
+    func notifications() async throws -> NotificationsResponse {
+        try await send(authorizedRequest("/api/notifications"))
+    }
+
+    func markNotificationsRead() async throws {
+        try await sendVoid(authorizedRequest("/api/notifications/mark-read", method: "POST"))
     }
 }

@@ -4,7 +4,7 @@ struct LoginView: View {
     @Environment(SupabaseAuthManager.self) private var auth
     @Environment(\.dismiss) private var dismiss
 
-    @State private var email = ""
+    @State private var identifier = ""
     @State private var password = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
@@ -13,9 +13,11 @@ struct LoginView: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField(Loc.t("email"), text: $email)
+                    // حسابات مؤسسية (طلاب مولّدين بالجملة) تسجّل دخول باسم
+                    // مستخدم بدون إيميل حقيقي - نفس حقل الإيميل يقبل الاثنين
+                    TextField(Loc.t("email_or_username"), text: $identifier)
                         .textInputAutocapitalization(.never)
-                        .keyboardType(.emailAddress)
+                        .autocorrectionDisabled()
                     SecureField(Loc.t("password"), text: $password)
                 }
                 if let errorMessage {
@@ -31,7 +33,7 @@ struct LoginView: View {
                             Text(Loc.t("login")).frame(maxWidth: .infinity)
                         }
                     }
-                    .disabled(isLoading || email.isEmpty || password.isEmpty)
+                    .disabled(isLoading || identifier.isEmpty || password.isEmpty)
                 }
             }
             .navigationTitle(Loc.t("login"))
@@ -48,10 +50,10 @@ struct LoginView: View {
         isLoading = true
         errorMessage = nil
         do {
-            try await auth.signIn(email: email, password: password)
+            try await auth.signInWithIdentifier(identifier, password: password)
             dismiss()
         } catch {
-            errorMessage = Loc.t("error_generic")
+            errorMessage = Loc.t("err_wrong_credentials")
         }
         isLoading = false
     }

@@ -11,6 +11,17 @@ final class SupabaseAuthManager {
     var session: Session?
     var isBootstrapping = true
 
+    // نظام إدارة حسابات المدارس (٥ أدوار) - role == nil يعني حساب فردي عادي
+    // (نفس تجربة التطبيق الحالية بدون أي تغيير). تُعبّى من `/api/me` بعد كل دخول
+    // ناجح - راجع `refreshMe()`.
+    var role: String?
+    var schoolId: String?
+    var classId: String?
+    var mustChangePassword = false
+    /// true بعد أول رد ناجح من `/api/me` - نستخدمها بـ RootView عشان ما نوجّه
+    /// المستخدم بناءً على قيم افتراضية فاضية قبل ما تكتمل قراءة دوره الفعلي.
+    var didLoadRole = false
+
     private init() {
         client = SupabaseClient(supabaseURL: APIConfig.supabaseURL, supabaseKey: APIConfig.supabaseAnonKey)
         Task { await observeAuthState() }
@@ -38,6 +49,10 @@ final class SupabaseAuthManager {
     private func observeAuthState() async {
         for await state in client.auth.authStateChanges {
             session = state.session
+            // لو فيه جلسة محفوظة من قبل (إعادة فتح التطبيق، مو دخول جديد)، نجيب
+            // الدور قبل ما نخفي شاشة البداية - عشان RootView يوجّه صح من أول
+            // لحظة بدل ما يعرض الشاشة الافتراضية للحظة ثم يقفز للوحة الدور
+            if state.session != nil { await refreshMe() }
             isBootstrapping = false
         }
     }
@@ -45,6 +60,41 @@ final class SupabaseAuthManager {
     func signIn(email: String, password: String) async throws {
         session = try await client.auth.signIn(email: email, password: password)
         AppSettings.shared.isGuest = false
+        await refreshMe()
+    }
+
+    /// حسابات الطلاب المولّدة بالجملة تسجّل دخول باسم مستخدم (بدون إيميل حقيقي)
+    /// - لو المُدخل مو إيميل، نحوّله أول لبريده الاصطناعي عبر الباك إند قبل
+    /// Supabase (اللي يتطلب إيميل دايمًا لتسجيل الدخول بكلمة سر). نفس منطق
+    /// موقع الويب بالضبط.
+    func signInWithIdentifier(_ identifier: String, password: String) async throws {
+        var email = identifier
+        if !identifier.contains("@") {
+            email = try await APIClient.shared.resolveLoginIdentifier(identifier)
+        }
+        try await signIn(email: email, password: password)
+    }
+
+    /// يجيب دور الحساب الحالي (`/api/me`) - يُنادى بعد كل دخول ناجح، وبرضو عند
+    /// إقلاع التطبيق لو فيه جلسة محفوظة أصلًا. غير حرج لو فشل (مشكلة شبكة
+    /// لحظية) - الحساب الفردي العادي (role == nil) يستمر بنفس تجربته الحالية.
+    func refreshMe() async {
+        guard isAuthenticated else { return }
+        if let me = try? await APIClient.shared.me() {
+            role = me.role
+            schoolId = me.schoolId
+            classId = me.classId
+            mustChangePassword = me.mustChangePassword
+        }
+        didLoadRole = true
+    }
+
+    /// يُنادى بعد ما بوابة إجبار تغيير كلمة السر تنجح - يصفّر العلم محليًا
+    /// فورًا (بدل ما ننتظر رحلة شبكة كاملة ثانية لـ `/api/me`) بعد ما نأكد
+    /// الباك إند فعليًا صفّره.
+    func completePasswordChange() async throws {
+        try await APIClient.shared.completePasswordChange()
+        mustChangePassword = false
     }
 
     func signUp(email: String, password: String, username: String, educationLevel: String, proficiencyLevel: String) async throws -> Bool {
@@ -66,7 +116,14 @@ final class SupabaseAuthManager {
     }
 
     func signOut() async throws {
-        defer { session = nil }
+        defer {
+            session = nil
+            role = nil
+            schoolId = nil
+            classId = nil
+            mustChangePassword = false
+            didLoadRole = false
+        }
         try await client.auth.signOut()
     }
 
