@@ -36,13 +36,17 @@ struct RoomQuizView: View {
         }
         .background(Color.appBackground)
         .toolbar {
+            // Separate ToolbarItems, not several Buttons grouped in one HStack under a single
+            // item — grouping breaks iOS's overflow handling and can produce a dead "..." button.
             ToolbarItem(placement: .primaryAction) {
-                HStack(spacing: 14) {
-                    Button { showChat = true } label: { Image(systemName: "bubble.left.and.bubble.right") }
-                    if socket.roomState.isHost {
-                        Button { showInvite = true } label: { Image(systemName: "person.badge.plus") }
-                        Button { showManagement = true } label: { Image(systemName: "gearshape") }
-                    }
+                Button { showChat = true } label: { Image(systemName: "bubble.left.and.bubble.right") }
+            }
+            if socket.roomState.isHost {
+                ToolbarItem(placement: .primaryAction) {
+                    Button { showInvite = true } label: { Image(systemName: "person.badge.plus") }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button { showManagement = true } label: { Image(systemName: "gearshape") }
                 }
             }
         }

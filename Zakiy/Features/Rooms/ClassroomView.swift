@@ -27,20 +27,27 @@ struct ClassroomView: View {
         }
         .background(Color.appBackground)
         .toolbar {
+            // Each button is its own ToolbarItem (never several Buttons grouped inside one
+            // HStack under a single ToolbarItem) — grouping them breaks iOS's own overflow
+            // handling and can leave a dead "..." button that does nothing when tapped.
             if !isQuizActive {
-                ToolbarItem(placement: .primaryAction) {
-                    HStack(spacing: 14) {
-                        Button { showChat = true } label: { Image(systemName: "bubble.left.and.bubble.right") }
-                        Button { showParticipants = true } label: { Image(systemName: "person.3") }
-                        if socket.roomState.isHost {
-                            Button { showInvite = true } label: { Image(systemName: "person.badge.plus") }
-                            Button { showManagement = true } label: { Image(systemName: "gearshape") }
-                        }
-                    }
-                }
                 if socket.roomState.canManageContent {
                     ToolbarItem(placement: .topBarLeading) {
                         Button(Loc.t("start_quiz")) { showQuizSetup = true }
+                    }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button { showChat = true } label: { Image(systemName: "bubble.left.and.bubble.right") }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button { showParticipants = true } label: { Image(systemName: "person.3") }
+                }
+                if socket.roomState.isHost {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button { showInvite = true } label: { Image(systemName: "person.badge.plus") }
+                    }
+                    ToolbarItem(placement: .primaryAction) {
+                        Button { showManagement = true } label: { Image(systemName: "gearshape") }
                     }
                 }
             }

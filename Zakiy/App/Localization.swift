@@ -289,7 +289,7 @@ enum Loc {
         "open_chat": "فتح الشات",
         "share_summary_with_room": "شارك الملخص مع الطلاب",
         "start_solo_study": "ابدأ مذاكرة فردية",
-        "start_solo_study_subtitle": "ملخص، اختبار، ومحادثة ذكاء اصطناعي من ملفك",
+        "start_solo_study_subtitle": "ملخص واختبار ودردشة ذكية",
         "summary_required_hint": "لازم تولّد الملخص قبل ما تقدر تبدأ الاختبار",
         "text_placeholder": "النص",
     ]
@@ -573,7 +573,7 @@ enum Loc {
         "open_chat": "Open Chat",
         "share_summary_with_room": "Share summary with students",
         "start_solo_study": "Start Solo Study",
-        "start_solo_study_subtitle": "Summary, quiz, and AI chat from your file",
+        "start_solo_study_subtitle": "Summary, quiz, and AI chat",
         "summary_required_hint": "You need to generate the summary before you can start the quiz",
         "text_placeholder": "Text",
     ]

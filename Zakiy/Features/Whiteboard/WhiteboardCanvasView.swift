@@ -51,6 +51,7 @@ struct WhiteboardCanvasView: View {
                 .gesture(canDraw ? drawGesture : nil)
                 .simultaneousGesture(canDraw ? textTapGesture : nil)
             }
+            .frame(minHeight: 240)
 
             if canDraw {
                 toolbar
@@ -113,31 +114,35 @@ struct WhiteboardCanvasView: View {
     }
 
     private var toolbar: some View {
-        HStack(spacing: 14) {
-            Button(role: .destructive) {
-                socket.clearBoard()
-            } label: {
-                Image(systemName: "trash")
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 18) {
+                toolButton(.pen, systemImage: "pencil")
+                toolButton(.eraser, systemImage: "eraser")
+                toolButton(.text, systemImage: "textformat")
+
+                Divider().frame(height: 26)
+
+                ForEach(palette, id: \.self) { color in
+                    Circle()
+                        .fill(color)
+                        .frame(width: 30, height: 30)
+                        .overlay(Circle().stroke(Color.primary.opacity(selectedColor == color ? 0.6 : 0), lineWidth: 2.5))
+                        .onTapGesture { selectedColor = color }
+                }
+
+                Divider().frame(height: 26)
+
+                Button(role: .destructive) {
+                    socket.clearBoard()
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 20))
+                        .frame(width: 36, height: 36)
+                }
             }
-
-            Divider().frame(height: 20)
-
-            ForEach(palette, id: \.self) { color in
-                Circle()
-                    .fill(color)
-                    .frame(width: 24, height: 24)
-                    .overlay(Circle().stroke(Color.primary.opacity(selectedColor == color ? 0.6 : 0), lineWidth: 2))
-                    .onTapGesture { selectedColor = color }
-            }
-
-            Divider().frame(height: 20)
-
-            toolButton(.text, systemImage: "textformat")
-            toolButton(.eraser, systemImage: "eraser")
-            toolButton(.pen, systemImage: "pencil")
+            .padding(.horizontal)
+            .padding(.vertical, 14)
         }
-        .padding(.horizontal)
-        .padding(.vertical, 10)
         .background(Color.appCard)
     }
 
@@ -146,8 +151,9 @@ struct WhiteboardCanvasView: View {
             tool = candidate
         } label: {
             Image(systemName: systemImage)
+                .font(.system(size: 18))
                 .foregroundStyle(tool == candidate ? Color.appAccentText : .primary)
-                .padding(8)
+                .frame(width: 36, height: 36)
                 .background(tool == candidate ? Color.accentColor : Color.clear, in: Circle())
         }
     }

@@ -163,8 +163,8 @@ struct HomeActionCard: View {
                 .frame(width: 48, height: 48)
                 .background(tint.gradient, in: RoundedRectangle(cornerRadius: 14))
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.headline)
-                Text(subtitle).font(.subheadline).foregroundStyle(.secondary)
+                Text(title).font(.headline).lineLimit(1)
+                Text(subtitle).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer()
             Image(systemName: "chevron.forward")
