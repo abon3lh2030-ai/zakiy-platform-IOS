@@ -238,6 +238,12 @@ final class APIClient {
         try await send(authorizedRequest("/api/performance"))
     }
 
+    /// Records "opened the app today" for the daily streak — safe to call once per session;
+    /// the backend itself dedupes to one row per user per day.
+    func pingActive() async throws {
+        try await sendVoid(authorizedRequest("/api/ping-active", method: "POST"))
+    }
+
     func recordQuizAttempt(score: Int, total: Int, timeTaken: Int, wrongTopics: [String], mode: String = "solo") async throws {
         var request = authorizedRequest("/api/quiz-attempt", method: "POST")
         jsonBody(&request, ["score": score, "total": total, "time_taken": timeTaken, "wrong_topics": wrongTopics, "mode": mode])

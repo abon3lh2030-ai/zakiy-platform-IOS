@@ -292,6 +292,9 @@ enum Loc {
         "start_solo_study_subtitle": "ملخص واختبار ودردشة ذكية",
         "summary_required_hint": "لازم تولّد الملخص قبل ما تقدر تبدأ الاختبار",
         "text_placeholder": "النص",
+        "billing_period": "الفترة",
+        "current_plan_badge": "باقتك الحالية",
+        "restore_purchases": "استعادة المشتريات",
     ]
 
     static let en: [String: String] = [
@@ -576,5 +579,8 @@ enum Loc {
         "start_solo_study_subtitle": "Summary, quiz, and AI chat",
         "summary_required_hint": "You need to generate the summary before you can start the quiz",
         "text_placeholder": "Text",
+        "billing_period": "Period",
+        "current_plan_badge": "Your Current Plan",
+        "restore_purchases": "Restore Purchases",
     ]
 }

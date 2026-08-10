@@ -5,6 +5,7 @@ struct FriendsListView: View {
 
     @State private var friends: [Friend] = []
     @State private var incomingRequests: [FriendRequest] = []
+    @State private var sessionInvites: [SessionInvite] = []
     @State private var isLoading = true
     @State private var showMyQR = false
     @State private var showScanner = false
@@ -12,6 +13,14 @@ struct FriendsListView: View {
     @State private var searchResults: [Friend] = []
     @State private var isSearching = false
     @State private var errorMessage: String?
+    @State private var joinTarget: JoinTarget?
+    @State private var removeTarget: Friend?
+
+    private struct JoinTarget: Identifiable, Hashable {
+        let roomCode: String
+        let roomType: String
+        var id: String { roomCode }
+    }
 
     var body: some View {
         Group {
@@ -21,95 +30,174 @@ struct FriendsListView: View {
             } else if isLoading {
                 ProgressView(Loc.t("loading")).frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                List {
-                    Section {
-                        TextField(Loc.t("search_by_username"), text: $searchText)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .onSubmit { Task { await search() } }
-                    }
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        qrCard
 
-                    if isSearching {
-                        ProgressView()
-                    } else if !searchResults.isEmpty {
-                        Section(Loc.t("search_results")) {
-                            ForEach(searchResults) { user in
-                                HStack {
-                                    Text(user.username)
-                                    Spacer()
-                                    Button(Loc.t("add_friend")) {
-                                        Task { await sendRequest(to: user) }
+                        sectionBlock(title: Loc.t("session_invites"), icon: "envelope.badge.fill") {
+                            if sessionInvites.isEmpty {
+                                Text(Loc.t("session_invites_empty")).foregroundStyle(.secondary).padding(.vertical, 4)
+                            } else {
+                                ForEach(sessionInvites) { invite in
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(invite.fromUsername.map { String(format: Loc.t("invite_from"), $0) } ?? Loc.t("session_invites"))
+                                            Text(invite.roomCode).font(.caption).foregroundStyle(.secondary)
+                                        }
+                                        Spacer()
+                                        Button(Loc.t("join")) {
+                                            joinTarget = JoinTarget(roomCode: invite.roomCode, roomType: invite.roomType)
+                                            sessionInvites.removeAll { $0.id == invite.id }
+                                            Task { try? await APIClient.shared.dismissSessionInvite(id: invite.id) }
+                                        }
+                                        .buttonStyle(.borderedProminent)
+                                        .tint(.accentColor)
+                                        .controlSize(.small)
                                     }
+                                    .padding(.vertical, 4)
+                                    if invite.id != sessionInvites.last?.id { Divider() }
+                                }
+                            }
+                        }
+
+                        if !incomingRequests.isEmpty {
+                            sectionBlock(title: Loc.t("friend_requests"), icon: "person.badge.clock.fill") {
+                                ForEach(incomingRequests) { req in
+                                    HStack {
+                                        Text(req.username)
+                                        Spacer()
+                                        Button(Loc.t("accept")) {
+                                            Task { await respond(req, accept: true) }
+                                        }
+                                        .buttonStyle(.borderedProminent)
+                                        .tint(.accentColor)
+                                        .controlSize(.small)
+                                        Button(Loc.t("decline")) {
+                                            Task { await respond(req, accept: false) }
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .controlSize(.small)
+                                    }
+                                    .padding(.vertical, 4)
+                                    if req.id != incomingRequests.last?.id { Divider() }
+                                }
+                            }
+                        }
+
+                        sectionBlock(title: Loc.t("my_friends"), icon: "person.2.fill") {
+                            if friends.isEmpty {
+                                Text(Loc.t("no_friends_yet")).foregroundStyle(.secondary).padding(.vertical, 4)
+                            } else {
+                                ForEach(friends) { friend in
+                                    HStack {
+                                        Button(Loc.t("delete"), role: .destructive) {
+                                            removeTarget = friend
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .tint(.red)
+                                        .controlSize(.small)
+                                        Spacer()
+                                        NavigationLink {
+                                            ProfileView(userId: friend.userId)
+                                        } label: {
+                                            Text(friend.username)
+                                        }
+                                    }
+                                    .padding(.vertical, 4)
+                                    if friend.id != friends.last?.id { Divider() }
+                                }
+                            }
+                        }
+
+                        sectionBlock(title: Loc.t("add_friend_section"), icon: "person.badge.plus") {
+                            HStack {
+                                TextField(Loc.t("search_by_username"), text: $searchText)
+                                    .textInputAutocapitalization(.never)
+                                    .autocorrectionDisabled()
+                                    .onSubmit { Task { await search() } }
+                                Button(Loc.t("search")) { Task { await search() } }
                                     .buttonStyle(.bordered)
                                     .controlSize(.small)
-                                }
                             }
-                        }
-                    }
 
-                    if !incomingRequests.isEmpty {
-                        Section(Loc.t("friend_requests")) {
-                            ForEach(incomingRequests) { req in
-                                HStack {
-                                    Text(req.username)
-                                    Spacer()
-                                    Button(Loc.t("accept")) {
-                                        Task { await respond(req, accept: true) }
+                            if isSearching {
+                                ProgressView().padding(.top, 6)
+                            } else if !searchResults.isEmpty {
+                                VStack(spacing: 0) {
+                                    ForEach(searchResults) { user in
+                                        HStack {
+                                            Text(user.username)
+                                            Spacer()
+                                            Button(Loc.t("add_friend")) {
+                                                Task { await sendRequest(to: user) }
+                                            }
+                                            .buttonStyle(.bordered)
+                                            .controlSize(.small)
+                                        }
+                                        .padding(.vertical, 6)
                                     }
-                                    .buttonStyle(.borderedProminent)
-                                    .tint(.accentColor)
-                                    .controlSize(.small)
-                                    Button(Loc.t("decline")) {
-                                        Task { await respond(req, accept: false) }
-                                    }
-                                    .buttonStyle(.bordered)
-                                    .controlSize(.small)
                                 }
+                                .padding(.top, 4)
                             }
                         }
                     }
-
-                    Section(Loc.t("my_friends")) {
-                        if friends.isEmpty {
-                            Text(Loc.t("no_friends_yet")).foregroundStyle(.secondary)
-                        } else {
-                            ForEach(friends) { friend in
-                                NavigationLink {
-                                    ProfileView(userId: friend.userId)
-                                } label: {
-                                    Text(friend.username)
-                                }
-                            }
-                        }
-                    }
+                    .padding()
                 }
-                .scrollContentBackground(.hidden)
             }
         }
         .background(Color.appBackground)
         .navigationTitle(Loc.t("friends"))
-        .toolbar {
-            if auth.isAuthenticated {
-                ToolbarItem(placement: .primaryAction) {
-                    Menu {
-                        Button { showMyQR = true } label: {
-                            Label(Loc.t("my_qr_code"), systemImage: "qrcode")
-                        }
-                        Button { showScanner = true } label: {
-                            Label(Loc.t("scan_qr_code"), systemImage: "qrcode.viewfinder")
-                        }
-                    } label: {
-                        Image(systemName: "qrcode")
-                    }
-                }
-            }
-        }
         .sheet(isPresented: $showMyQR) { MyQRCodeView() }
         .sheet(isPresented: $showScanner) { QRScannerView() }
+        .navigationDestination(item: $joinTarget) { target in
+            RoomContainerView(roomCode: target.roomCode, roomType: target.roomType, isCreator: false)
+        }
         .task { await load() }
         .refreshable { await load() }
         .alert(errorMessage ?? "", isPresented: .constant(errorMessage != nil)) {
             Button(Loc.t("ok"), role: .cancel) { errorMessage = nil }
+        }
+        .alert(Loc.t("confirm_remove_friend"), isPresented: .constant(removeTarget != nil)) {
+            Button(Loc.t("cancel"), role: .cancel) { removeTarget = nil }
+            Button(Loc.t("delete"), role: .destructive) {
+                if let removeTarget { Task { await removeFriend(removeTarget) } }
+            }
+        }
+    }
+
+    private var qrCard: some View {
+        VStack(spacing: 0) {
+            Button { showMyQR = true } label: {
+                HStack {
+                    Text(Loc.t("my_qr_code")).foregroundStyle(Color.accentColor)
+                    Spacer()
+                    Image(systemName: "qrcode").foregroundStyle(Color.accentColor)
+                }
+                .padding()
+            }
+            Divider().padding(.horizontal)
+            Button { showScanner = true } label: {
+                HStack {
+                    Text(Loc.t("scan_qr_code")).foregroundStyle(Color.accentColor)
+                    Spacer()
+                    Image(systemName: "qrcode.viewfinder").foregroundStyle(Color.accentColor)
+                }
+                .padding()
+            }
+        }
+        .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    @ViewBuilder
+    private func sectionBlock<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label(title, systemImage: icon).font(.headline)
+            VStack(alignment: .leading, spacing: 0) {
+                content()
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
         }
     }
 
@@ -118,8 +206,10 @@ struct FriendsListView: View {
         isLoading = true
         async let f = APIClient.shared.friends()
         async let r = APIClient.shared.friendRequests()
+        async let i = APIClient.shared.sessionInvites()
         friends = (try? await f) ?? []
         incomingRequests = (try? await r)?.incoming ?? []
+        sessionInvites = (try? await i) ?? []
         isLoading = false
     }
 
@@ -148,5 +238,11 @@ struct FriendsListView: View {
         } else {
             try? await APIClient.shared.rejectFriendRequest(requestId: request.id)
         }
+    }
+
+    private func removeFriend(_ friend: Friend) async {
+        removeTarget = nil
+        friends.removeAll { $0.id == friend.id }
+        try? await APIClient.shared.removeFriend(userId: friend.userId)
     }
 }

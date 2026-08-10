@@ -23,6 +23,10 @@ struct RootView: View {
         .environment(\.layoutDirection, settings.layoutDirection)
         .preferredColorScheme(settings.appearanceMode.colorScheme)
         .id(settings.languageCode)
+        .task(id: auth.isAuthenticated) {
+            guard auth.isAuthenticated else { return }
+            try? await APIClient.shared.pingActive()
+        }
     }
 }
 

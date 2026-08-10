@@ -7,12 +7,6 @@ struct PerformanceDashboardView: View {
     @State private var data: PerformanceData?
     @State private var isLoading = true
 
-    private var averageScore: Double {
-        guard let attempts = data?.attempts, !attempts.isEmpty else { return 0 }
-        let percentages = attempts.map { $0.total > 0 ? Double($0.score) / Double($0.total) * 100 : 0 }
-        return percentages.reduce(0, +) / Double(percentages.count)
-    }
-
     var body: some View {
         Group {
             if !auth.isAuthenticated {
@@ -25,39 +19,24 @@ struct PerformanceDashboardView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         summaryRow(data)
-
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text(Loc.t("progress_over_time")).font(.headline)
-                            Chart(Array(data.attempts.enumerated()), id: \.offset) { index, attempt in
-                                let percentage = attempt.total > 0 ? Double(attempt.score) / Double(attempt.total) * 100 : 0
-                                LineMark(
-                                    x: .value(Loc.t("date"), index),
-                                    y: .value(Loc.t("score_percent"), percentage)
-                                )
-                                .foregroundStyle(Color.accentColor)
-                                .symbol(Circle())
-                            }
-                            .chartXAxis(.hidden)
-                            .frame(height: 200)
-                        }
-                        .padding()
-                        .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
+                        progressChart(data)
 
                         if !data.weakTopics.isEmpty {
-                            VStack(alignment: .leading, spacing: 10) {
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text(Loc.t("weak_topics")).font(.headline)
-                                ForEach(data.weakTopics) { topic in
-                                    HStack {
-                                        Text(topic.topic)
-                                        Spacer()
-                                        Text("\(topic.count)×").foregroundStyle(.secondary)
+                                VStack(spacing: 0) {
+                                    ForEach(data.weakTopics) { topic in
+                                        HStack {
+                                            Text("\(topic.count)").foregroundStyle(.secondary)
+                                            Spacer()
+                                            Text(topic.topic)
+                                        }
+                                        .font(.subheadline)
+                                        .padding(.vertical, 10)
+                                        if topic.id != data.weakTopics.last?.id { Divider() }
                                     }
-                                    .font(.subheadline)
-                                    .padding(.vertical, 4)
                                 }
                             }
-                            .padding()
-                            .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
                         }
                     }
                     .padding()
@@ -74,22 +53,43 @@ struct PerformanceDashboardView: View {
     }
 
     private func summaryRow(_ data: PerformanceData) -> some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-            statCard(title: Loc.t("total_attempts"), value: "\(data.attempts.count)")
-            statCard(title: Loc.t("average_score"), value: String(format: "%.0f%%", averageScore))
-            statCard(title: Loc.t("current_streak"), value: "\(data.currentStreak)")
-            statCard(title: Loc.t("longest_streak"), value: "\(data.longestStreak)")
+        HStack(spacing: 10) {
+            statTile(value: "\(data.longestStreak)", icon: "trophy.fill", label: Loc.t("longest_streak_label"), tint: .orange)
+            statTile(value: String(format: "%.1f", Double(data.totalStudyMinutes) / 60), icon: "clock.fill", label: Loc.t("study_hours_label"), tint: .gray)
+            statTile(value: "\(data.currentStreak)", icon: "flame.fill", label: Loc.t("streak_label"), tint: Color.accentColor)
         }
     }
 
-    private func statCard(title: String, value: String) -> some View {
+    private func statTile(value: String, icon: String, label: String, tint: Color) -> some View {
         VStack(spacing: 6) {
-            Text(value).font(.title2.bold()).foregroundStyle(Color.accentColor)
-            Text(title).font(.caption).foregroundStyle(.secondary)
+            Image(systemName: icon).font(.subheadline).foregroundStyle(tint)
+            Text(value).font(.title3.bold())
+            Text(label).font(.caption2).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
-        .background(Color.appCard, in: RoundedRectangle(cornerRadius: 14))
+        .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func progressChart(_ data: PerformanceData) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(Loc.t("score_progress_title")).font(.headline)
+            Chart(Array(data.attempts.suffix(10).enumerated()), id: \.offset) { index, attempt in
+                let percentage = attempt.total > 0 ? Double(attempt.score) / Double(attempt.total) * 100 : 0
+                LineMark(
+                    x: .value(Loc.t("attempt_axis"), index),
+                    y: .value(Loc.t("percentage_axis"), percentage)
+                )
+                .interpolationMethod(.catmullRom)
+                .foregroundStyle(Color.accentColor)
+                .lineStyle(StrokeStyle(lineWidth: 3))
+            }
+            .chartXAxis(.hidden)
+            .chartYScale(domain: 0...100)
+            .frame(height: 180)
+        }
+        .padding()
+        .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
     }
 
     private func load() async {
