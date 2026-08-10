@@ -13,6 +13,7 @@ struct AdminDashboardView: View {
     @State private var formError: String?
     @State private var credentialResult: GeneratedCredentials?
     @State private var actionError: String?
+    @State private var schoolPendingDelete: School?
 
     var body: some View {
         List {
@@ -99,9 +100,24 @@ struct AdminDashboardView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
+                Button(Loc.t("btn_delete"), role: .destructive) {
+                    schoolPendingDelete = school
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
             }
         }
         .padding(.vertical, 4)
+        .confirmationDialog(
+            Loc.t("confirm_delete_school"),
+            isPresented: Binding(get: { schoolPendingDelete?.id == school.id }, set: { if !$0 { schoolPendingDelete = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button(Loc.t("btn_delete"), role: .destructive) {
+                Task { await deleteSchool(school) }
+            }
+            Button(Loc.t("cancel"), role: .cancel) { schoolPendingDelete = nil }
+        }
     }
 
     private func load() async {
@@ -146,6 +162,16 @@ struct AdminDashboardView: View {
         actionError = nil
         do {
             credentialResult = try await APIClient.shared.adminResetSchoolAdminPassword(schoolId: school.id)
+        } catch {
+            actionError = Loc.t("error_generic")
+        }
+    }
+
+    private func deleteSchool(_ school: School) async {
+        actionError = nil
+        do {
+            try await APIClient.shared.adminDeleteSchool(id: school.id)
+            await load()
         } catch {
             actionError = Loc.t("error_generic")
         }

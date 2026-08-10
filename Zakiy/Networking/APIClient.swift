@@ -308,6 +308,12 @@ final class APIClient {
         try await send(authorizedRequest("/api/admin/schools/\(schoolId)/reset-admin-password", method: "POST"))
     }
 
+    /// حذف مدرسة بالكامل (مو بس إيقافها) - يشيل صف المدرسة (cascade يشيل
+    /// معه الفصول/الحصص/الحضور المرتبطة) ويحذف حسابات Auth لكل أعضائها
+    func adminDeleteSchool(id: String) async throws {
+        try await sendVoid(authorizedRequest("/api/admin/schools/\(id)", method: "DELETE"))
+    }
+
     // ---- School Admin / School Administration ----
 
     func schoolInfo() async throws -> SchoolInfo {
@@ -328,6 +334,12 @@ final class APIClient {
 
     func schoolDeleteAccount(userId: String) async throws {
         try await sendVoid(authorizedRequest("/api/school/accounts/\(userId)", method: "DELETE"))
+    }
+
+    /// يولّد كلمة سر عشوائية قوية جديدة لأي حساب تابع لمدرستك (معلم أو طالب)
+    /// ويفعّل must_change_password تلقائيًا - كلمة السر تظهر مرة وحدة بس
+    func schoolResetAccountPassword(userId: String) async throws -> AccountResetCredentials {
+        try await send(authorizedRequest("/api/school/accounts/\(userId)/reset-password", method: "POST"))
     }
 
     func schoolCreateClass(name: String, teacherId: String?) async throws -> SchoolClass {

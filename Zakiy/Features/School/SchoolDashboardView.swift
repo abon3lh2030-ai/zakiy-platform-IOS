@@ -5,11 +5,12 @@ import SwiftUI
 /// الباك إند نفسه، الواجهة هنا مشتركة للدورين).
 struct SchoolDashboardView: View {
     private enum Tab: String, CaseIterable, Identifiable {
-        case teachers, classes, bulk, attendance
+        case teachers, students, classes, bulk, attendance
         var id: String { rawValue }
         var titleKey: String {
             switch self {
             case .teachers: "tab_teachers"
+            case .students: "tab_students"
             case .classes: "tab_classes"
             case .bulk: "tab_bulk_students"
             case .attendance: "tab_attendance"
@@ -37,6 +38,7 @@ struct SchoolDashboardView: View {
             Group {
                 switch tab {
                 case .teachers: SchoolTeachersView()
+                case .students: SchoolStudentsView()
                 case .classes: SchoolClassesView()
                 case .bulk: SchoolBulkAddView()
                 case .attendance: SchoolAttendanceView()
@@ -67,6 +69,19 @@ func credentialResultBox(_ creds: GeneratedCredentials, title: String) -> some V
     VStack(alignment: .leading, spacing: 4) {
         Text(title).font(.footnote.bold())
         Text(creds.email).font(.footnote)
+        Text(creds.password).font(.footnote.monospaced())
+    }
+    .padding(8)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+}
+
+/// نفس الصندوق، لكن لنتيجة إعادة تعيين كلمة سر حساب موجود (معلم أو طالب) -
+/// "identifier" مو بالضرورة بريد فعلي (حساب الطالب يتعرّف باسم مستخدم بس)
+func credentialResultBox(_ creds: AccountResetCredentials, title: String) -> some View {
+    VStack(alignment: .leading, spacing: 4) {
+        Text(title).font(.footnote.bold())
+        Text(creds.identifier).font(.footnote)
         Text(creds.password).font(.footnote.monospaced())
     }
     .padding(8)

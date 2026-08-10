@@ -54,6 +54,14 @@ struct GeneratedCredentials: Decodable {
     let password: String
 }
 
+/// نتيجة إعادة تعيين كلمة سر أي حساب بالمدرسة (معلم أو طالب) - "identifier"
+/// عامّ لأن حساب الطالب يتعرّف باسم مستخدم لا بريد فعلي (مطابق لنفس مفتاح
+/// JSON اللي يرجّعه /api/school/accounts/<id>/reset-password بالباك إند)
+struct AccountResetCredentials: Decodable {
+    let identifier: String
+    let password: String
+}
+
 struct CreateSchoolResponse: Decodable {
     let school: School
     let schoolAdmin: GeneratedCredentials
@@ -94,13 +102,16 @@ struct TeacherSummary: Identifiable, Decodable {
     var id: String { userId }
     let userId: String
     let username: String
+    let fullName: String?
     let classes: [SchoolClass]
     let studentCount: Int
     let lastLogin: String?
 
     enum CodingKeys: String, CodingKey {
         case userId = "user_id"
-        case username, classes
+        case username
+        case fullName = "full_name"
+        case classes
         case studentCount = "student_count"
         case lastLogin = "last_login"
     }
@@ -110,11 +121,13 @@ struct SchoolStudent: Identifiable, Decodable, Hashable {
     var id: String { userId }
     let userId: String
     let username: String
+    let fullName: String?
     let classId: String?
 
     enum CodingKeys: String, CodingKey {
         case userId = "user_id"
         case username
+        case fullName = "full_name"
         case classId = "class_id"
     }
 }
@@ -164,6 +177,7 @@ struct BulkAddResponse: Decodable {
 struct InstitutionalProfile: Decodable {
     let userId: String
     let username: String
+    let fullName: String?
     let bio: String?
     let schoolName: String?
     let role: String?
@@ -172,7 +186,9 @@ struct InstitutionalProfile: Decodable {
 
     enum CodingKeys: String, CodingKey {
         case userId = "user_id"
-        case username, bio
+        case username
+        case fullName = "full_name"
+        case bio
         case schoolName = "school_name"
         case role, performance, archive
     }
@@ -238,6 +254,7 @@ struct TeacherPerformanceRow: Identifiable, Decodable {
     var id: String { userId }
     let userId: String
     let username: String
+    let fullName: String?
     let classId: String?
     let attemptsCount: Int
     let avgScore: Int
@@ -247,6 +264,7 @@ struct TeacherPerformanceRow: Identifiable, Decodable {
     enum CodingKeys: String, CodingKey {
         case userId = "user_id"
         case username
+        case fullName = "full_name"
         case classId = "class_id"
         case attemptsCount = "attempts_count"
         case avgScore = "avg_score"

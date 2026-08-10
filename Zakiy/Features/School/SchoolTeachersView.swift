@@ -14,6 +14,10 @@ struct SchoolTeachersView: View {
     @State private var isBroadcasting = false
     @State private var broadcastMessage: String?
 
+    @State private var resetResult: AccountResetCredentials?
+    @State private var resetError: String?
+    @State private var teacherPendingReset: TeacherSummary?
+
     var body: some View {
         List {
             Section(Loc.t("btn_add_teacher")) {
@@ -51,6 +55,12 @@ struct SchoolTeachersView: View {
                         teacherRow(teacher)
                     }
                 }
+                if let resetResult {
+                    credentialResultBox(resetResult, title: Loc.t("reset_password_result_msg"))
+                }
+                if let resetError {
+                    Text(resetError).font(.footnote).foregroundStyle(.red)
+                }
             }
 
             Section(Loc.t("broadcast_teachers_heading")) {
@@ -77,7 +87,10 @@ struct SchoolTeachersView: View {
 
     private func teacherRow(_ teacher: TeacherSummary) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(teacher.username).font(.headline)
+            Text(teacher.fullName?.isEmpty == false ? teacher.fullName! : teacher.username).font(.headline)
+            if teacher.fullName?.isEmpty == false {
+                Text(teacher.username).font(.caption).foregroundStyle(.secondary)
+            }
             if !teacher.classes.isEmpty {
                 Text(teacher.classes.map(\.name).joined(separator: "، ")).font(.caption).foregroundStyle(.secondary)
             }
@@ -86,12 +99,28 @@ struct SchoolTeachersView: View {
                 Spacer()
                 Text(teacher.lastLogin ?? Loc.t("never_logged_in")).font(.caption).foregroundStyle(.secondary)
             }
-            Button(Loc.t("btn_delete"), role: .destructive) {
-                Task { await deleteTeacher(teacher) }
+            HStack {
+                Button(Loc.t("btn_reset_password")) {
+                    teacherPendingReset = teacher
+                }
+                .font(.caption)
+                Button(Loc.t("btn_delete"), role: .destructive) {
+                    Task { await deleteTeacher(teacher) }
+                }
+                .font(.caption)
             }
-            .font(.caption)
         }
         .padding(.vertical, 4)
+        .confirmationDialog(
+            Loc.t("confirm_reset_account_password"),
+            isPresented: Binding(get: { teacherPendingReset?.id == teacher.id }, set: { if !$0 { teacherPendingReset = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button(Loc.t("btn_reset_password")) {
+                Task { await resetPassword(teacher) }
+            }
+            Button(Loc.t("cancel"), role: .cancel) { teacherPendingReset = nil }
+        }
     }
 
     private func load() async {
@@ -121,6 +150,16 @@ struct SchoolTeachersView: View {
     private func deleteTeacher(_ teacher: TeacherSummary) async {
         try? await APIClient.shared.schoolDeleteAccount(userId: teacher.userId)
         await load()
+    }
+
+    private func resetPassword(_ teacher: TeacherSummary) async {
+        resetError = nil
+        resetResult = nil
+        do {
+            resetResult = try await APIClient.shared.schoolResetAccountPassword(userId: teacher.userId)
+        } catch {
+            resetError = Loc.t("error_generic")
+        }
     }
 
     private func sendBroadcast() async {
