@@ -15,10 +15,10 @@ final class UsageLimiter {
     private init() {}
 
     private let limits: [PlanTier: TierLimits] = [
-        .free: TierLimits(librarySave: 3, soloSession: 3, groupRoom: 1, liveLesson: 0, archiveDepth: 3, performanceDepth: 5),
-        .plus: TierLimits(librarySave: 8, soloSession: 5, groupRoom: 3, liveLesson: 1, archiveDepth: 10, performanceDepth: 15),
-        .pro: TierLimits(librarySave: 15, soloSession: 10, groupRoom: 5, liveLesson: 5, archiveDepth: 30, performanceDepth: 30),
-        .ultimate: TierLimits(librarySave: 30, soloSession: nil, groupRoom: nil, liveLesson: 8, archiveDepth: nil, performanceDepth: nil),
+        .free: TierLimits(librarySave: 5, soloSession: 3, groupRoom: 1, liveLesson: 0, archiveDepth: 8, performanceDepth: 5),
+        .plus: TierLimits(librarySave: 20, soloSession: 5, groupRoom: 3, liveLesson: 1, archiveDepth: 15, performanceDepth: 8),
+        .pro: TierLimits(librarySave: 30, soloSession: 10, groupRoom: 5, liveLesson: 3, archiveDepth: 30, performanceDepth: 15),
+        .ultimate: TierLimits(librarySave: 50, soloSession: nil, groupRoom: nil, liveLesson: 8, archiveDepth: nil, performanceDepth: nil),
         .owner: TierLimits(librarySave: nil, soloSession: nil, groupRoom: nil, liveLesson: nil, archiveDepth: nil, performanceDepth: nil),
     ]
 

@@ -38,10 +38,19 @@ final class StoreManager {
             if case .verified(let transaction) = verification {
                 await transaction.finish()
                 await refreshPurchasedProducts()
+                await syncWithBackend(productID: transaction.productID, transactionID: String(transaction.id))
             }
         default:
             break
         }
+    }
+
+    /// يبلّغ الباك إند بالاشتراك الجديد بعد نجاح الشراء فعليًا على الجهاز -
+    /// لو المستخدم ضيف/مو مسجّل دخول ما نقدر نربطه بحساب، نتجاهل بصمت
+    /// (StoreKit نفسه يبقى مصدر الحقيقة على هذا الجهاز رغم ذلك)
+    private func syncWithBackend(productID: String, transactionID: String) async {
+        guard SupabaseAuthManager.shared.isAuthenticated else { return }
+        _ = try? await APIClient.shared.subscriptionAppleVerify(productID: productID, transactionID: transactionID)
     }
 
     func refreshPurchasedProducts() async {
@@ -59,7 +68,12 @@ final class StoreManager {
             for await result in Transaction.updates {
                 if case .verified(let transaction) = result {
                     await transaction.finish()
-                    await MainActor.run { Task { await StoreManager.shared.refreshPurchasedProducts() } }
+                    await MainActor.run {
+                        Task {
+                            await StoreManager.shared.refreshPurchasedProducts()
+                            await StoreManager.shared.syncWithBackend(productID: transaction.productID, transactionID: String(transaction.id))
+                        }
+                    }
                 }
             }
         }

@@ -500,4 +500,14 @@ final class APIClient {
     func markNotificationsRead() async throws {
         try await sendVoid(authorizedRequest("/api/notifications/mark-read", method: "POST"))
     }
+
+    // ---- الاشتراكات ----
+
+    /// يزامن نتيجة شراء StoreKit ناجح مع الباك إند - يخلي حساب المستخدم
+    /// عارف بالباقة حتى لو دخل من جهاز/منصة ثانية (StoreManager يناديها بعد كل شراء).
+    func subscriptionAppleVerify(productID: String, transactionID: String) async throws -> SubscriptionSyncResponse {
+        var request = authorizedRequest("/api/subscription/apple/verify", method: "POST")
+        jsonBody(&request, ["product_id": productID, "transaction_id": transactionID])
+        return try await send(request)
+    }
 }

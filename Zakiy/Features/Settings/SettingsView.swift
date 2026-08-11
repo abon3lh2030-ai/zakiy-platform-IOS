@@ -37,8 +37,12 @@ struct SettingsView: View {
             }
 
             Section {
-                NavigationLink { SubscriptionView() } label: {
-                    SettingsRow(icon: "crown.fill", tint: .orange, title: Loc.t("subscription"), subtitle: Loc.t("subscription_subtitle"))
+                // حساب مؤسسي (طالب/معلم/إدارة مدرسة...) وصوله محكوم بباقة مدرسته
+                // لا باشتراك فردي - ما نعرض له زر الاشتراك إطلاقًا
+                if auth.role == nil {
+                    NavigationLink { SubscriptionView() } label: {
+                        SettingsRow(icon: "crown.fill", tint: .orange, title: Loc.t("subscription"), subtitle: Loc.t("subscription_subtitle"))
+                    }
                 }
                 NavigationLink { FriendsListView() } label: {
                     SettingsRow(icon: "person.2.fill", tint: .blue, title: Loc.t("friends"), subtitle: Loc.t("friends_subtitle"))
