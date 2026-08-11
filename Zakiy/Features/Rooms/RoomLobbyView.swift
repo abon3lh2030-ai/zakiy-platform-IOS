@@ -32,15 +32,32 @@ struct RoomLobbyView: View {
     }
 
     var body: some View {
+        // لازم حساب مسجّل عشان تدخل أي درس مباشر أو جلسة جماعية - ما فيه
+        // دخول كضيف إطلاقًا (نفس القيد اللي الباك إند يفرضه الحين)
+        if !auth.isAuthenticated {
+            loginRequiredView
+        } else {
+            roomLobbyContent
+        }
+    }
+
+    private var loginRequiredView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "lock.fill").font(.largeTitle).foregroundStyle(.secondary)
+            Text(Loc.t("login_required_for_rooms")).multilineTextAlignment(.center).foregroundStyle(.secondary)
+            NavigationLink(Loc.t("login")) { LoginView() }
+                .buttonStyle(.borderedProminent)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .navigationTitle(roomType == "classroom" ? Loc.t("room_type_classroom") : Loc.t("group_room"))
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var roomLobbyContent: some View {
         ScrollView {
             VStack(spacing: 20) {
-                if !auth.isAuthenticated {
-                    TextField(Loc.t("your_name"), text: $guestName)
-                        .textFieldStyle(.plain)
-                        .padding(16)
-                        .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
-                }
-
                 Button {
                     Task { await createRoom() }
                 } label: {
