@@ -1,28 +1,17 @@
 import SwiftUI
 
-/// لوحة المعلم: قد يدرّس أكثر من فصل - محدد فصل أعلى اللوحة يفلتر كل التبويبات،
-/// وزر "ابدأ درس مباشر" ينشئ غرفة كلاس مربوطة بالفصل المختار مباشرة (يسجّل
-/// حضور تلقائي) بإعادة استخدام نظام الغرف/السبورة/الصوت الموجود بالكامل.
+/// لوحة المعلم: قد يدرّس أكثر من فصل - محدد فصل أعلى اللوحة يفلتر الأقسام
+/// اللي تحته، وزر "ابدأ درس مباشر" ينشئ غرفة كلاس مربوطة بالفصل المختار
+/// مباشرة (يسجّل حضور تلقائي) بإعادة استخدام نظام الغرف/السبورة/الصوت
+/// الموجود بالكامل. الأقسام (الطلاب/الأداء/جدولي/الحضور/المكتبة) قائمة
+/// عناصر تُفتح كل وحدة بصفحتها لحالها (بدل تبويبات مقسّمة بسطر وحد ضيق) -
+/// نفس أسلوب شاشة الإعدادات، يوسّع بسهولة لو زدنا أقسام بعدين.
 struct TeacherDashboardView: View {
-    private enum Tab: String, CaseIterable, Identifiable {
-        case roster, performance, schedule, attendance
-        var id: String { rawValue }
-        var titleKey: String {
-            switch self {
-            case .roster: "tab_roster"
-            case .performance: "tab_performance"
-            case .schedule: "tab_schedule"
-            case .attendance: "tab_attendance"
-            }
-        }
-    }
-
     private struct LiveClassDestination: Identifiable, Hashable {
         let roomCode: String
         var id: String { roomCode }
     }
 
-    @State private var tab: Tab = .roster
     @State private var classes: [SchoolClass] = []
     @State private var selectedClassId: String?
     @State private var isStartingClass = false
@@ -30,8 +19,8 @@ struct TeacherDashboardView: View {
     @State private var liveClassDestination: LiveClassDestination?
 
     var body: some View {
-        VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
+        List {
+            Section {
                 if !classes.isEmpty {
                     Picker(Loc.t("opt_all_my_classes"), selection: $selectedClassId) {
                         Text(Loc.t("opt_all_my_classes")).tag(String?.none)
@@ -56,27 +45,29 @@ struct TeacherDashboardView: View {
                     Text(startError).font(.footnote).foregroundStyle(.red)
                 }
             }
-            .padding(.horizontal)
-            .padding(.top, 8)
 
-            Picker("", selection: $tab) {
-                ForEach(Tab.allCases) { t in
-                    Text(Loc.t(t.titleKey)).tag(t)
+            Section {
+                NavigationLink { TeacherRosterView(selectedClassId: $selectedClassId) } label: {
+                    DashboardMenuRow(icon: "person.3.fill", tint: .blue, title: Loc.t("tab_roster"))
                 }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-            .padding(.top, 8)
-
-            Group {
-                switch tab {
-                case .roster: TeacherRosterView(selectedClassId: $selectedClassId)
-                case .performance: TeacherPerformanceView(selectedClassId: selectedClassId)
-                case .schedule: TeacherScheduleView()
-                case .attendance: TeacherAttendanceView(selectedClassId: selectedClassId)
+                NavigationLink { TeacherPerformanceView(selectedClassId: selectedClassId) } label: {
+                    DashboardMenuRow(icon: "chart.bar.fill", tint: .purple, title: Loc.t("tab_performance"))
+                }
+                NavigationLink { TeacherScheduleView() } label: {
+                    DashboardMenuRow(icon: "calendar", tint: .orange, title: Loc.t("tab_schedule"))
+                }
+                NavigationLink { TeacherAttendanceView(selectedClassId: selectedClassId) } label: {
+                    DashboardMenuRow(icon: "checklist", tint: .green, title: Loc.t("tab_attendance"))
+                }
+                // مكتبة المعلم الشخصية (يرفع ويحفظ كتبه/ملازمه) - نفس شاشة
+                // مكتبة الطلاب بالضبط، بس مدموجة هنا لأن حساب مؤسسي ما يوصل
+                // MainTabView العادي إطلاقًا (لوحته تحل محله بالكامل)
+                NavigationLink { LibraryListView() } label: {
+                    DashboardMenuRow(icon: "books.vertical.fill", tint: .indigo, title: Loc.t("tab_library"))
                 }
             }
         }
+        .scrollContentBackground(.hidden)
         .background(Color.appBackground)
         .navigationTitle(Loc.t("teacher_dash_heading"))
         .navigationBarTitleDisplayMode(.inline)

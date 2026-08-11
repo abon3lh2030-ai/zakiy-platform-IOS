@@ -2,49 +2,44 @@ import SwiftUI
 
 /// لوحة مدير المدرسة / وكيل وإداريي المدرسة - نفس الصلاحيات على المعلمين
 /// والطلاب والحضور، إلا إدارة حسابات مدير/إداريي مدرسة ثانية (يتحكم فيها
-/// الباك إند نفسه، الواجهة هنا مشتركة للدورين).
+/// الباك إند نفسه، الواجهة هنا مشتركة للدورين). الأقسام قائمة عناصر تُفتح
+/// كل وحدة بصفحتها لحالها (بدل تبويبات مقسّمة بسطر وحد ضيق) - نفس أسلوب
+/// شاشة الإعدادات، يوسّع بسهولة لو زدنا أقسام بعدين.
 struct SchoolDashboardView: View {
-    private enum Tab: String, CaseIterable, Identifiable {
-        case teachers, students, classes, bulk, attendance
-        var id: String { rawValue }
-        var titleKey: String {
-            switch self {
-            case .teachers: "tab_teachers"
-            case .students: "tab_students"
-            case .classes: "tab_classes"
-            case .bulk: "tab_bulk_students"
-            case .attendance: "tab_attendance"
-            }
-        }
-    }
-
-    @State private var tab: Tab = .teachers
     @State private var info: SchoolInfo?
 
     var body: some View {
-        VStack(spacing: 0) {
+        List {
             if let info {
-                usageBar(info)
-            }
-            Picker("", selection: $tab) {
-                ForEach(Tab.allCases) { t in
-                    Text(Loc.t(t.titleKey)).tag(t)
+                Section {
+                    usageBar(info)
                 }
             }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-            .padding(.top, 8)
 
-            Group {
-                switch tab {
-                case .teachers: SchoolTeachersView()
-                case .students: SchoolStudentsView()
-                case .classes: SchoolClassesView()
-                case .bulk: SchoolBulkAddView()
-                case .attendance: SchoolAttendanceView()
+            Section {
+                NavigationLink { SchoolTeachersView() } label: {
+                    DashboardMenuRow(icon: "person.crop.rectangle.stack.fill", tint: .blue, title: Loc.t("tab_teachers"))
+                }
+                NavigationLink { SchoolStudentsView() } label: {
+                    DashboardMenuRow(icon: "person.3.fill", tint: .teal, title: Loc.t("tab_students"))
+                }
+                NavigationLink { SchoolClassesView() } label: {
+                    DashboardMenuRow(icon: "tag.fill", tint: .orange, title: Loc.t("tab_classes"))
+                }
+                NavigationLink { SchoolBulkAddView() } label: {
+                    DashboardMenuRow(icon: "person.badge.plus.fill", tint: .green, title: Loc.t("tab_bulk_students"))
+                }
+                NavigationLink { SchoolAttendanceView() } label: {
+                    DashboardMenuRow(icon: "checklist", tint: .purple, title: Loc.t("tab_attendance"))
+                }
+                // مكتبة مدير/إداري المدرسة الشخصية - نفس شاشة مكتبة الطلاب
+                // بالضبط، بس مدموجة هنا لأن حساب مؤسسي ما يوصل MainTabView إطلاقًا
+                NavigationLink { LibraryListView() } label: {
+                    DashboardMenuRow(icon: "books.vertical.fill", tint: .indigo, title: Loc.t("tab_library"))
                 }
             }
         }
+        .scrollContentBackground(.hidden)
         .background(Color.appBackground)
         .navigationTitle(Loc.t("school_dash_heading"))
         .navigationBarTitleDisplayMode(.inline)
@@ -58,8 +53,6 @@ struct SchoolDashboardView: View {
             Text(String(format: Loc.t("school_usage_text"), info.accountsUsed, info.maxAccounts))
                 .font(.caption).foregroundStyle(.secondary)
         }
-        .padding(.horizontal)
-        .padding(.top, 8)
     }
 }
 
