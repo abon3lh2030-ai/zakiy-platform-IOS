@@ -344,6 +344,7 @@ struct NotificationItem: Identifiable, Decodable, Hashable {
     let type: String
     let title: String
     let body: String?
+    let senderId: String?
     let relatedClassId: String?
     let relatedRoomCode: String?
     let createdAt: String
@@ -351,6 +352,7 @@ struct NotificationItem: Identifiable, Decodable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case id, type, title, body
+        case senderId = "sender_id"
         case relatedClassId = "related_class_id"
         case relatedRoomCode = "related_room_code"
         case createdAt = "created_at"
