@@ -20,6 +20,9 @@ struct SchoolDashboardView: View {
                 NavigationLink { SchoolTeachersView() } label: {
                     DashboardMenuRow(icon: "person.crop.rectangle.stack.fill", tint: .blue, title: Loc.t("tab_teachers"))
                 }
+                NavigationLink { SchoolAdministrationView() } label: {
+                    DashboardMenuRow(icon: "person.badge.key.fill", tint: .brown, title: Loc.t("admin_staff_heading"))
+                }
                 NavigationLink { SchoolStudentsView() } label: {
                     DashboardMenuRow(icon: "person.3.fill", tint: .teal, title: Loc.t("tab_students"))
                 }

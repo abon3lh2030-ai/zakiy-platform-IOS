@@ -336,6 +336,20 @@ final class APIClient {
         try await sendVoid(authorizedRequest("/api/school/accounts/\(userId)", method: "DELETE"))
     }
 
+    /// إنشاء حساب "إداري مدرسة" (school_administration) - محجوز على مدير
+    /// المدرسة (school_admin) نفسه بالباك إند
+    func schoolAddAdministration(name: String, email: String) async throws -> GeneratedCredentials {
+        var request = authorizedRequest("/api/school/administration", method: "POST")
+        jsonBody(&request, ["name": name, "email": email])
+        return try await send(request)
+    }
+
+    func schoolAdministrationStaff() async throws -> [AdminStaffSummary] {
+        struct Response: Decodable { let administration: [AdminStaffSummary] }
+        let result: Response = try await send(authorizedRequest("/api/school/administration"))
+        return result.administration
+    }
+
     /// يولّد كلمة سر عشوائية قوية جديدة لأي حساب تابع لمدرستك (معلم أو طالب)
     /// ويفعّل must_change_password تلقائيًا - كلمة السر تظهر مرة وحدة بس
     func schoolResetAccountPassword(userId: String) async throws -> AccountResetCredentials {

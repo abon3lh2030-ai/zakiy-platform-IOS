@@ -117,6 +117,21 @@ struct TeacherSummary: Identifiable, Decodable {
     }
 }
 
+/// حساب "إداري مدرسة" (school_administration) - نفس صلاحيات مدير المدرسة
+/// على المعلمين/الطلاب/الحضور، إلا إدارة حساب مدير/إداري ثاني
+struct AdminStaffSummary: Identifiable, Decodable {
+    var id: String { userId }
+    let userId: String
+    let username: String
+    let lastLogin: String?
+
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case username
+        case lastLogin = "last_login"
+    }
+}
+
 struct SchoolStudent: Identifiable, Decodable, Hashable {
     var id: String { userId }
     let userId: String
