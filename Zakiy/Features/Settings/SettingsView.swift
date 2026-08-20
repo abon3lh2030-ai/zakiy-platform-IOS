@@ -44,6 +44,13 @@ struct SettingsView: View {
                         SettingsRow(icon: "crown.fill", tint: .orange, title: Loc.t("subscription"), subtitle: Loc.t("subscription_subtitle"))
                     }
                 }
+                // دفتر الواجبات - طالب بس (المعلم يشوفه من لوحته الخاصة
+                // TeacherDashboardView، ما يوصل هذي الشاشة إطلاقًا)
+                if auth.role == "student" {
+                    NavigationLink { AssignmentsListView() } label: {
+                        SettingsRow(icon: "doc.text.fill", tint: .pink, title: Loc.t("assignments"), subtitle: Loc.t("assignments_subtitle"))
+                    }
+                }
                 NavigationLink { FriendsListView() } label: {
                     SettingsRow(icon: "person.2.fill", tint: .blue, title: Loc.t("friends"), subtitle: Loc.t("friends_subtitle"))
                 }

@@ -544,11 +544,86 @@ final class APIClient {
         return result.sentTo
     }
 
+    // ---- دفتر الواجبات - معلم (محجوب عن الحساب الفردي بالكامل بالباك إند) ----
+
+    func createAssignment(classId: String, targetStudentId: String?, subject: String, title: String, content: String) async throws {
+        var request = authorizedRequest("/api/teacher/assignments", method: "POST")
+        var payload: [String: Any] = ["class_id": classId, "subject": subject, "title": title, "content": content]
+        if let targetStudentId { payload["target_student_id"] = targetStudentId }
+        jsonBody(&request, payload)
+        try await sendVoid(request)
+    }
+
+    func teacherAssignments() async throws -> [AssignmentSummary] {
+        struct Response: Decodable { let assignments: [AssignmentSummary] }
+        let result: Response = try await send(authorizedRequest("/api/teacher/assignments"))
+        return result.assignments
+    }
+
+    func teacherAssignmentDetail(id: String) async throws -> AssignmentDetail {
+        try await send(authorizedRequest("/api/teacher/assignments/\(id)"))
+    }
+
+    func gradeAssignmentSubmission(assignmentId: String, studentId: String, grade: String) async throws {
+        var request = authorizedRequest("/api/teacher/assignments/\(assignmentId)/submissions/\(studentId)", method: "PATCH")
+        jsonBody(&request, ["grade": grade])
+        try await sendVoid(request)
+    }
+
+    func teacherSubmissionFileURL(assignmentId: String, studentId: String) async throws -> String {
+        struct Response: Decodable { let url: String }
+        let result: Response = try await send(authorizedRequest("/api/teacher/assignments/\(assignmentId)/submissions/\(studentId)/file"))
+        return result.url
+    }
+
+    func deleteAssignment(id: String) async throws {
+        try await sendVoid(authorizedRequest("/api/teacher/assignments/\(id)", method: "DELETE"))
+    }
+
     // ---- Student ----
 
     func studentSchedule() async throws -> [ClassScheduleEntry] {
         let result: StudentScheduleResponse = try await send(authorizedRequest("/api/student/schedule"))
         return result.schedule
+    }
+
+    // ---- دفتر الواجبات - طالب ----
+
+    func studentAssignments() async throws -> [AssignmentSummary] {
+        struct Response: Decodable { let assignments: [AssignmentSummary] }
+        let result: Response = try await send(authorizedRequest("/api/student/assignments"))
+        return result.assignments
+    }
+
+    func studentAssignmentDetail(id: String) async throws -> AssignmentDetail {
+        try await send(authorizedRequest("/api/student/assignments/\(id)"))
+    }
+
+    /// نفس نمط upload(fileURL:) بالضبط - multipart بحقلين (file + note)
+    func submitAssignment(id: String, fileURL: URL, note: String) async throws {
+        var request = authorizedRequest("/api/student/assignments/\(id)/submit", method: "POST")
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        let fileData = try Data(contentsOf: fileURL)
+        var body = Data()
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileURL.lastPathComponent)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: application/octet-stream\r\n\r\n".data(using: .utf8)!)
+        body.append(fileData)
+        body.append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"note\"\r\n\r\n".data(using: .utf8)!)
+        body.append(note.data(using: .utf8)!)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        request.httpBody = body
+
+        try await sendVoid(request)
+    }
+
+    func studentSubmissionFileURL(id: String) async throws -> String {
+        struct Response: Decodable { let url: String }
+        let result: Response = try await send(authorizedRequest("/api/student/assignments/\(id)/file"))
+        return result.url
     }
 
     // ---- رسائل مباشرة + تنبيهات (لأي مستخدم مسجّل دخول) ----

@@ -369,3 +369,82 @@ struct NotificationsResponse: Decodable {
         case unreadCount = "unread_count"
     }
 }
+
+// MARK: - دفتر الواجبات (معلم/طالب بس - محجوب عن الحساب الفردي)
+
+/// عنصر بقائمة الواجبات - حقول المعلم (submittedCount/totalCount) وحقول
+/// الطالب (submitted/grade) كلها اختيارية بنفس الـ struct، كل جهة تستخدم
+/// اللي يخصها بس (الباك إند يرجّع مجموعة حقول مختلفة حسب الـ endpoint).
+struct AssignmentSummary: Identifiable, Decodable, Hashable {
+    let id: String
+    let subject: String
+    let title: String
+    let classId: String?
+    let className: String?
+    let createdAt: String
+    let submittedCount: Int?
+    let totalCount: Int?
+    let submitted: Bool?
+    let grade: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, subject, title, grade, submitted
+        case classId = "class_id"
+        case className = "class_name"
+        case createdAt = "created_at"
+        case submittedCount = "submitted_count"
+        case totalCount = "total_count"
+    }
+}
+
+struct AssignmentStudentStatus: Identifiable, Decodable, Hashable {
+    var id: String { userId }
+    let userId: String
+    let username: String
+    let fullName: String?
+    let submitted: Bool
+    let submittedAt: String?
+    let fileName: String?
+    let note: String?
+    let grade: String?
+
+    enum CodingKeys: String, CodingKey {
+        case username, submitted, note, grade
+        case userId = "user_id"
+        case fullName = "full_name"
+        case submittedAt = "submitted_at"
+        case fileName = "file_name"
+    }
+}
+
+struct AssignmentSubmission: Decodable, Hashable {
+    let fileName: String
+    let note: String?
+    let submittedAt: String
+    let grade: String?
+
+    enum CodingKeys: String, CodingKey {
+        case note, grade
+        case fileName = "file_name"
+        case submittedAt = "submitted_at"
+    }
+}
+
+/// تفصيل واجب وحد - `students` تجي من مسار المعلم بس، `submission` من مسار
+/// الطالب بس (الآخر يبقى nil دايمًا حسب مين طلبها).
+struct AssignmentDetail: Decodable {
+    let id: String
+    let subject: String
+    let title: String
+    let content: String
+    let classId: String?
+    let targetStudentId: String?
+    let students: [AssignmentStudentStatus]?
+    let submission: AssignmentSubmission?
+
+    enum CodingKeys: String, CodingKey {
+        case id, subject, title, content, students, submission
+        case classId = "class_id"
+        case targetStudentId = "target_student_id"
+    }
+}

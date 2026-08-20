@@ -65,6 +65,11 @@ struct TeacherDashboardView: View {
                 NavigationLink { LibraryListView() } label: {
                     DashboardMenuRow(icon: "books.vertical.fill", tint: .indigo, title: Loc.t("tab_library"))
                 }
+                // دفتر الواجبات - معلم/طالب بس، نفس سبب دمج المكتبة هنا
+                // (حساب مؤسسي ما يوصل MainTabView/SettingsView العادي)
+                NavigationLink { AssignmentsListView() } label: {
+                    DashboardMenuRow(icon: "doc.text.fill", tint: .pink, title: Loc.t("assignments"))
+                }
             }
         }
         .scrollContentBackground(.hidden)
