@@ -70,7 +70,7 @@ enum Loc {
         "notes_delete_confirm": "تحذف هذي الملاحظة نهائيًا؟",
         "notes_delete_folder_confirm": "تحذف هذا المجلد؟ الملاحظات جواه تبقى بدون مجلد",
         "note_type_text": "نص",
-        "note_type_checklist": "تو-دو",
+        "note_type_checklist": "قائمة المهام",
         "note_title_placeholder": "عنوان الملاحظة",
         "note_content_placeholder": "اكتب ملاحظتك هنا...",
         "note_checklist_add_placeholder": "إضافة عنصر...",
