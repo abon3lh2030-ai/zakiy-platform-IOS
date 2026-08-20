@@ -216,6 +216,39 @@ final class APIClient {
         try await sendVoid(authorizedRequest("/api/notes/\(id)", method: "DELETE"))
     }
 
+    // ---------- المساعد الذكي (محادثات محفوظة - متاح لأي حساب، فردي أو مؤسسي) ----------
+    func aiConversations() async throws -> [AIConversationSummary] {
+        struct Response: Decodable { let conversations: [AIConversationSummary] }
+        let result: Response = try await send(authorizedRequest("/api/ai/conversations"))
+        return result.conversations
+    }
+
+    func createAiConversation() async throws -> AIConversationDetail {
+        try await send(authorizedRequest("/api/ai/conversations", method: "POST"))
+    }
+
+    func aiConversation(id: String) async throws -> AIConversationDetail {
+        try await send(authorizedRequest("/api/ai/conversations/\(id)"))
+    }
+
+    func deleteAiConversation(id: String) async throws {
+        try await sendVoid(authorizedRequest("/api/ai/conversations/\(id)", method: "DELETE"))
+    }
+
+    /// رسالة عادية (content بس) أو طلب تلخيص كتاب (bookTitle+bookText معًا) -
+    /// الاثنين يمرون بنفس المسار، الباك إند يفرّق بينهم حسب الحقول الموجودة
+    func sendAiMessage(conversationId: String, content: String? = nil, bookTitle: String? = nil, bookText: String? = nil, lang: String) async throws -> (reply: String, title: String?) {
+        var request = authorizedRequest("/api/ai/conversations/\(conversationId)/messages", method: "POST")
+        var payload: [String: Any] = ["lang": lang]
+        if let content { payload["content"] = content }
+        if let bookTitle { payload["book_title"] = bookTitle }
+        if let bookText { payload["book_text"] = bookText }
+        jsonBody(&request, payload)
+        struct Response: Decodable { let reply: String; let title: String? }
+        let result: Response = try await send(request)
+        return (result.reply, result.title)
+    }
+
     func syncProfile(username: String) async throws {
         var request = authorizedRequest("/api/profile/sync", method: "POST")
         jsonBody(&request, ["username": username])

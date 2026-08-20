@@ -102,6 +102,47 @@ struct Note: Identifiable, Codable, Hashable {
     }
 }
 
+/// المساعد الذكي - محادثات محفوظة، متاحة لأي حساب (فردي أو مؤسسي). نسخة
+/// مختصرة لقائمة المحادثات (بدون messages - الباك إند نفسه ما يرجّعها
+/// بمسار القائمة توفيرًا لحجم الرد)
+struct AIConversationSummary: Identifiable, Codable, Hashable {
+    let id: String
+    let title: String
+    let bookTitle: String?
+    let updatedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, title
+        case bookTitle = "book_title"
+        case updatedAt = "updated_at"
+    }
+}
+
+struct AIMessage: Codable, Hashable, Identifiable {
+    var id: String { (createdAt ?? "") + role + content }
+    let role: String
+    let content: String
+    let createdAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case role, content
+        case createdAt = "created_at"
+    }
+}
+
+/// النسخة الكاملة - تُستخدم لفتح محادثة وحدة (فيها messages)
+struct AIConversationDetail: Identifiable, Codable, Hashable {
+    let id: String
+    let title: String
+    let bookTitle: String?
+    let messages: [AIMessage]
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, messages
+        case bookTitle = "book_title"
+    }
+}
+
 struct QuizAttempt: Identifiable, Codable, Equatable {
     var id: String { (createdAt ?? "") + mode + String(score) }
     let mode: String

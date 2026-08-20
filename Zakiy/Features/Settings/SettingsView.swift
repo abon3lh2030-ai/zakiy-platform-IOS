@@ -37,6 +37,11 @@ struct SettingsView: View {
             }
 
             Section {
+                // المساعد الذكي متاح لأي حساب مسجّل دخول - فردي أو مؤسسي، بدون
+                // أي تقييد دور (نفس سلوك زر السايد بار بالموقع)
+                NavigationLink { AIConversationsListView() } label: {
+                    SettingsRow(icon: "sparkles", tint: .teal, title: Loc.t("ai_assistant"), subtitle: Loc.t("ai_assistant_subtitle"))
+                }
                 // حساب مؤسسي (طالب/معلم/إدارة مدرسة...) وصوله محكوم بباقة مدرسته
                 // لا باشتراك فردي - ما نعرض له زر الاشتراك إطلاقًا
                 if auth.role == nil {

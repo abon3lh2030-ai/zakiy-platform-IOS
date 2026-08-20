@@ -9,6 +9,13 @@ struct RoleDashboardToolbar: ToolbarContent {
     var body: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             NavigationLink {
+                AIConversationsListView()
+            } label: {
+                Image(systemName: "sparkles")
+            }
+        }
+        ToolbarItem(placement: .topBarTrailing) {
+            NavigationLink {
                 MessagesView()
             } label: {
                 Image(systemName: NotificationSocketManager.shared.unreadCount > 0 ? "message.badge.fill" : "message")
