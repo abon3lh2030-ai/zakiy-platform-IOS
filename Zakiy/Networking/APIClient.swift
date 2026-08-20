@@ -152,6 +152,70 @@ final class APIClient {
         try await sendVoid(authorizedRequest("/api/library/\(id)", method: "DELETE"))
     }
 
+    // ---------- دفتر الملاحظات (حساب فردي بس - الباك إند يرفض أي حساب مؤسسي) ----------
+    func noteFolders() async throws -> [NoteFolder] {
+        struct Response: Decodable { let folders: [NoteFolder] }
+        let result: Response = try await send(authorizedRequest("/api/notes/folders"))
+        return result.folders
+    }
+
+    func createNoteFolder(name: String) async throws -> NoteFolder {
+        var request = authorizedRequest("/api/notes/folders", method: "POST")
+        jsonBody(&request, ["name": name])
+        return try await send(request)
+    }
+
+    func renameNoteFolder(id: String, name: String) async throws {
+        var request = authorizedRequest("/api/notes/folders/\(id)", method: "PATCH")
+        jsonBody(&request, ["name": name])
+        try await sendVoid(request)
+    }
+
+    func deleteNoteFolder(id: String) async throws {
+        try await sendVoid(authorizedRequest("/api/notes/folders/\(id)", method: "DELETE"))
+    }
+
+    func notes(folderId: String? = nil, query: String? = nil) async throws -> [NoteSummary] {
+        var path = "/api/notes"
+        var params: [String] = []
+        if let folderId { params.append("folder_id=\(folderId)") }
+        if let query, !query.isEmpty {
+            params.append("q=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")
+        }
+        if !params.isEmpty { path += "?" + params.joined(separator: "&") }
+        struct Response: Decodable { let notes: [NoteSummary] }
+        let result: Response = try await send(authorizedRequest(path))
+        return result.notes
+    }
+
+    func note(id: String) async throws -> Note {
+        try await send(authorizedRequest("/api/notes/\(id)"))
+    }
+
+    func createNote(title: String = "", content: String = "", noteType: String = "text", folderId: String? = nil) async throws -> Note {
+        var request = authorizedRequest("/api/notes", method: "POST")
+        var payload: [String: Any] = ["title": title, "content": content, "note_type": noteType]
+        if let folderId {
+            payload["folder_id"] = folderId
+        } else {
+            payload["folder_id"] = NSNull()
+        }
+        jsonBody(&request, payload)
+        return try await send(request)
+    }
+
+    /// تحديث جزئي مرن - مرّر بس الحقول اللي تغيّرت (title/content/folder_id/
+    /// note_type/checklist_items/is_pinned)
+    func updateNote(id: String, patch: [String: Any]) async throws -> Note {
+        var request = authorizedRequest("/api/notes/\(id)", method: "PATCH")
+        jsonBody(&request, patch)
+        return try await send(request)
+    }
+
+    func deleteNote(id: String) async throws {
+        try await sendVoid(authorizedRequest("/api/notes/\(id)", method: "DELETE"))
+    }
+
     func syncProfile(username: String) async throws {
         var request = authorizedRequest("/api/profile/sync", method: "POST")
         jsonBody(&request, ["username": username])

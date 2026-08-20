@@ -41,6 +41,67 @@ struct LibraryBookDetail: Codable {
     }
 }
 
+// ---------- دفتر الملاحظات (حساب فردي بس) ----------
+struct NoteFolder: Identifiable, Codable, Hashable {
+    let id: String
+    let name: String
+    let createdAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name
+        case createdAt = "created_at"
+    }
+}
+
+struct ChecklistItem: Codable, Hashable {
+    var text: String
+    var done: Bool
+}
+
+/// نسخة مختصرة لقائمة الملاحظات (بدون content/checklist_items - الباك إند
+/// نفسه ما يرجّعها بمسار القائمة توفيرًا لحجم الرد)
+struct NoteSummary: Identifiable, Codable, Hashable {
+    let id: String
+    let folderId: String?
+    let title: String
+    let noteType: String
+    let isPinned: Bool
+    let createdAt: String
+    let updatedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, title
+        case folderId = "folder_id"
+        case noteType = "note_type"
+        case isPinned = "is_pinned"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+/// النسخة الكاملة - تُستخدم لفتح/تحديث ملاحظة وحدة (فيها content/checklist_items)
+struct Note: Identifiable, Codable, Hashable {
+    let id: String
+    let folderId: String?
+    var title: String
+    var content: String
+    var noteType: String
+    var checklistItems: [ChecklistItem]
+    var isPinned: Bool
+    let createdAt: String
+    let updatedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, content
+        case folderId = "folder_id"
+        case noteType = "note_type"
+        case checklistItems = "checklist_items"
+        case isPinned = "is_pinned"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
 struct QuizAttempt: Identifiable, Codable, Equatable {
     var id: String { (createdAt ?? "") + mode + String(score) }
     let mode: String

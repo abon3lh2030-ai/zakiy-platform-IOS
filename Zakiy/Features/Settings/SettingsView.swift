@@ -50,6 +50,13 @@ struct SettingsView: View {
                 NavigationLink { ArchiveListView() } label: {
                     SettingsRow(icon: "archivebox.fill", tint: .gray, title: Loc.t("archive"), subtitle: Loc.t("archive_subtitle"))
                 }
+                // دفتر الملاحظات ميزة حساب فردي بس - نفس شرط الاشتراك أعلاه،
+                // أي حساب مؤسسي (role موجود) ما يشوفه إطلاقًا
+                if auth.role == nil {
+                    NavigationLink { NotesListView() } label: {
+                        SettingsRow(icon: "note.text", tint: .yellow, title: Loc.t("notes"), subtitle: Loc.t("notes_subtitle"))
+                    }
+                }
             }
 
             Section(Loc.t("language")) {
