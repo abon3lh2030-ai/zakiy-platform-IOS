@@ -579,10 +579,11 @@ final class APIClient {
 
     // ---- دفتر الواجبات - معلم (محجوب عن الحساب الفردي بالكامل بالباك إند) ----
 
-    func createAssignment(classId: String, targetStudentId: String?, subject: String, title: String, content: String) async throws {
+    /// الواجب دايمًا لكل طلاب الفصل (الباك إند ما يقبل/يستخدم target_student_id
+    /// بعد الآن - اختيار طالب معيّن انشال من واجهة الإنشاء)
+    func createAssignment(classId: String, subject: String, title: String, content: String) async throws {
         var request = authorizedRequest("/api/teacher/assignments", method: "POST")
-        var payload: [String: Any] = ["class_id": classId, "subject": subject, "title": title, "content": content]
-        if let targetStudentId { payload["target_student_id"] = targetStudentId }
+        let payload: [String: Any] = ["class_id": classId, "subject": subject, "title": title, "content": content]
         jsonBody(&request, payload)
         try await sendVoid(request)
     }
@@ -611,6 +612,58 @@ final class APIClient {
 
     func deleteAssignment(id: String) async throws {
         try await sendVoid(authorizedRequest("/api/teacher/assignments/\(id)", method: "DELETE"))
+    }
+
+    // ---- الاختبارات - معلم (محجوب عن الحساب الفردي بالكامل بالباك إند) ----
+
+    /// `questions` مصفوفة قواميس جاهزة بشكل `{question_type, question_text,
+    /// choices, correct_answer}` - شاشة الإنشاء/التعديل هي اللي تبنيها من
+    /// حالتها المحلية (نفس أسلوب `teacherSaveManualAttendance`)
+    func createQuiz(classId: String, subject: String, title: String, timeLimitMinutes: Int, questions: [[String: Any]]) async throws -> QuizBase {
+        var request = authorizedRequest("/api/teacher/quizzes", method: "POST")
+        jsonBody(&request, ["class_id": classId, "subject": subject, "title": title, "time_limit_minutes": timeLimitMinutes, "questions": questions])
+        return try await send(request)
+    }
+
+    func teacherQuizzes(classId: String? = nil) async throws -> [QuizSummary] {
+        var path = "/api/teacher/quizzes"
+        if let classId { path += "?class_id=\(classId)" }
+        struct Response: Decodable { let quizzes: [QuizSummary] }
+        let result: Response = try await send(authorizedRequest(path))
+        return result.quizzes
+    }
+
+    func teacherQuizDetail(id: String) async throws -> QuizDetail {
+        try await send(authorizedRequest("/api/teacher/quizzes/\(id)"))
+    }
+
+    /// تحديث جزئي - يشتغل بس لما الاختبار لسا مسودة (الباك إند يرفض 400 لو
+    /// منشور). `questions` لو مررت تستبدل كل الأسئلة القديمة بالكامل.
+    func updateQuiz(id: String, subject: String?, title: String?, timeLimitMinutes: Int?, questions: [[String: Any]]?) async throws -> QuizBase {
+        var request = authorizedRequest("/api/teacher/quizzes/\(id)", method: "PATCH")
+        var payload: [String: Any] = [:]
+        if let subject { payload["subject"] = subject }
+        if let title { payload["title"] = title }
+        if let timeLimitMinutes { payload["time_limit_minutes"] = timeLimitMinutes }
+        if let questions { payload["questions"] = questions }
+        jsonBody(&request, payload)
+        return try await send(request)
+    }
+
+    func publishQuiz(id: String) async throws -> QuizBase {
+        try await send(authorizedRequest("/api/teacher/quizzes/\(id)/publish", method: "POST"))
+    }
+
+    func deleteQuiz(id: String) async throws {
+        try await sendVoid(authorizedRequest("/api/teacher/quizzes/\(id)", method: "DELETE"))
+    }
+
+    /// تصحيح يدوي (أو تعديل تصحيح تلقائي) لمحاولة طالب - يشتغل دايمًا بغض
+    /// النظر عن حالة التصحيح التلقائي، وينبّه الطالب
+    func gradeQuizAttempt(quizId: String, studentId: String, grade: String) async throws {
+        var request = authorizedRequest("/api/teacher/quizzes/\(quizId)/attempts/\(studentId)", method: "PATCH")
+        jsonBody(&request, ["grade": grade])
+        try await sendVoid(request)
     }
 
     // ---- Student ----
@@ -657,6 +710,30 @@ final class APIClient {
         struct Response: Decodable { let url: String }
         let result: Response = try await send(authorizedRequest("/api/student/assignments/\(id)/file"))
         return result.url
+    }
+
+    // ---- الاختبارات - طالب ----
+
+    func studentQuizzes() async throws -> [QuizSummary] {
+        struct Response: Decodable { let quizzes: [QuizSummary] }
+        let result: Response = try await send(authorizedRequest("/api/student/quizzes"))
+        return result.quizzes
+    }
+
+    func studentQuizDetail(id: String) async throws -> QuizStudentDetail {
+        try await send(authorizedRequest("/api/student/quizzes/\(id)"))
+    }
+
+    /// idempotent - يرجّع نفس المحاولة القديمة بدون تصفير الوقت لو نودي عليها
+    /// أكثر من مرة (فتح الاختبار من جديد بمنتصف محاولة)
+    func startQuiz(id: String) async throws -> QuizAttemptRecord {
+        try await send(authorizedRequest("/api/student/quizzes/\(id)/start", method: "POST"))
+    }
+
+    func submitQuiz(id: String, answers: [String: String], autoSubmitted: Bool) async throws -> QuizAttemptRecord {
+        var request = authorizedRequest("/api/student/quizzes/\(id)/submit", method: "POST")
+        jsonBody(&request, ["answers": answers, "auto_submitted": autoSubmitted])
+        return try await send(request)
     }
 
     // ---- رسائل مباشرة + تنبيهات (لأي مستخدم مسجّل دخول) ----

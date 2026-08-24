@@ -438,6 +438,8 @@ struct AssignmentDetail: Decodable {
     let title: String
     let content: String
     let classId: String?
+    /// واجبات قديمة قد تكون محفوظة بهذا الحقل من قبل ما صار الواجب دايمًا
+    /// لكل الفصل - نبقيه هنا بس للتوافق مع القراءة، الواجهة ما تسمح بتعيينه
     let targetStudentId: String?
     let students: [AssignmentStudentStatus]?
     let submission: AssignmentSubmission?
@@ -446,5 +448,184 @@ struct AssignmentDetail: Decodable {
         case id, subject, title, content, students, submission
         case classId = "class_id"
         case targetStudentId = "target_student_id"
+    }
+}
+
+// MARK: - الاختبارات (معلم/طالب بس - محجوب عن الحساب الفردي بالكامل بالباك إند)
+
+/// عنصر بقائمة الاختبارات - حقول المعلم (className/submittedCount/totalCount)
+/// وحقول الطالب (submitted/isGraded/score/totalQuestions/grade) كلها اختيارية
+/// بنفس الـ struct، كل جهة تستخدم اللي يخصها بس (نفس نمط AssignmentSummary)
+struct QuizSummary: Identifiable, Decodable, Hashable {
+    let id: String
+    let classId: String?
+    let subject: String
+    let title: String
+    let timeLimitMinutes: Int
+    let isPublished: Bool
+    let createdAt: String
+    // معلم
+    let className: String?
+    let submittedCount: Int?
+    let totalCount: Int?
+    // طالب
+    let submitted: Bool?
+    let isGraded: Bool?
+    let score: Int?
+    let totalQuestions: Int?
+    let grade: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, subject, title, submitted, grade
+        case classId = "class_id"
+        case timeLimitMinutes = "time_limit_minutes"
+        case isPublished = "is_published"
+        case createdAt = "created_at"
+        case className = "class_name"
+        case submittedCount = "submitted_count"
+        case totalCount = "total_count"
+        case isGraded = "is_graded"
+        case score
+        case totalQuestions = "total_questions"
+    }
+}
+
+/// حقول الاختبار الأساسية المشتركة بردود الإنشاء/التعديل/النشر (بدون
+/// الأسئلة/الطلاب - الباك إند ما يرجّعهم بهالمسارات)
+struct QuizBase: Decodable, Hashable {
+    let id: String
+    let classId: String?
+    let subject: String
+    let title: String
+    let timeLimitMinutes: Int
+    let isPublished: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case id, subject, title
+        case classId = "class_id"
+        case timeLimitMinutes = "time_limit_minutes"
+        case isPublished = "is_published"
+    }
+}
+
+/// سؤال بمنظور المعلم - فيه correct_answer (اختياري، ممكن ما يكون معلّم بعد)
+struct QuizQuestionFull: Identifiable, Decodable, Hashable {
+    let id: String
+    let orderIndex: Int
+    let questionType: String
+    let questionText: String
+    let choices: [String]?
+    let correctAnswer: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, choices
+        case orderIndex = "order_index"
+        case questionType = "question_type"
+        case questionText = "question_text"
+        case correctAnswer = "correct_answer"
+    }
+}
+
+/// سؤال بمنظور الطالب - بدون correct_answer إطلاقًا (الباك إند ما يرسله)
+struct QuizQuestionForStudent: Identifiable, Decodable, Hashable {
+    let id: String
+    let orderIndex: Int
+    let questionType: String
+    let questionText: String
+    let choices: [String]?
+
+    enum CodingKeys: String, CodingKey {
+        case id, choices
+        case orderIndex = "order_index"
+        case questionType = "question_type"
+        case questionText = "question_text"
+    }
+}
+
+/// حالة طالب واحد بتفصيل الاختبار (منظور المعلم) - إجاباته الخام (لعرضها
+/// بالتصحيح) + نتيجة التصحيح التلقائي/اليدوي لو موجودة
+struct QuizStudentStatus: Identifiable, Decodable, Hashable {
+    var id: String { userId }
+    let userId: String
+    let username: String
+    let fullName: String?
+    let submitted: Bool
+    let submittedAt: String?
+    let autoSubmitted: Bool?
+    let answers: [String: String]?
+    let isGraded: Bool
+    let score: Int?
+    let totalQuestions: Int?
+    let grade: String?
+
+    enum CodingKeys: String, CodingKey {
+        case username, submitted, answers, grade
+        case userId = "user_id"
+        case fullName = "full_name"
+        case submittedAt = "submitted_at"
+        case autoSubmitted = "auto_submitted"
+        case isGraded = "is_graded"
+        case score
+        case totalQuestions = "total_questions"
+    }
+}
+
+/// تفصيل اختبار وحد بمنظور المعلم - الأسئلة كاملة (بالإجابة الصحيحة لو
+/// موجودة) + حالة كل طالب بالفصل
+struct QuizDetail: Decodable {
+    let id: String
+    let classId: String?
+    let subject: String
+    let title: String
+    let timeLimitMinutes: Int
+    let isPublished: Bool
+    let questions: [QuizQuestionFull]
+    let students: [QuizStudentStatus]
+
+    enum CodingKeys: String, CodingKey {
+        case id, subject, title, questions, students
+        case classId = "class_id"
+        case timeLimitMinutes = "time_limit_minutes"
+        case isPublished = "is_published"
+    }
+}
+
+/// محاولة الطالب على اختبار - ترجع من /start و/submit، وهي نفسها الحقل
+/// المرفق بتفصيل الطالب (nil لو لسا ما بدأ المحاولة)
+struct QuizAttemptRecord: Identifiable, Decodable, Hashable {
+    let id: String
+    let startedAt: String
+    let submittedAt: String?
+    let autoSubmitted: Bool
+    let answers: [String: String]
+    let isGraded: Bool
+    let score: Int?
+    let totalQuestions: Int?
+    let grade: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, answers, grade
+        case startedAt = "started_at"
+        case submittedAt = "submitted_at"
+        case autoSubmitted = "auto_submitted"
+        case isGraded = "is_graded"
+        case score
+        case totalQuestions = "total_questions"
+    }
+}
+
+/// تفصيل اختبار وحد بمنظور الطالب - الأسئلة بدون الإجابة الصحيحة + محاولته
+/// (nil لو لسا ما بدأ الاختبار)
+struct QuizStudentDetail: Decodable {
+    let id: String
+    let subject: String
+    let title: String
+    let timeLimitMinutes: Int
+    let questions: [QuizQuestionForStudent]
+    let attempt: QuizAttemptRecord?
+
+    enum CodingKeys: String, CodingKey {
+        case id, subject, title, questions, attempt
+        case timeLimitMinutes = "time_limit_minutes"
     }
 }

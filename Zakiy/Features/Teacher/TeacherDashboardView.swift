@@ -70,6 +70,10 @@ struct TeacherDashboardView: View {
                 NavigationLink { AssignmentsListView() } label: {
                     DashboardMenuRow(icon: "doc.text.fill", tint: .pink, title: Loc.t("assignments"))
                 }
+                // الاختبارات - معلم/طالب بس، نفس سبب دمج المكتبة/الواجبات هنا
+                NavigationLink { QuizzesListView() } label: {
+                    DashboardMenuRow(icon: "list.bullet.clipboard.fill", tint: .teal, title: Loc.t("quizzes"))
+                }
             }
         }
         .scrollContentBackground(.hidden)

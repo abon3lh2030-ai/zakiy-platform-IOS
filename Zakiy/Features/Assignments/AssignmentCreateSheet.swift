@@ -1,26 +1,19 @@
 import SwiftUI
 
-/// نموذج إنشاء واجب جديد - معلم بس. يجيب فصوله وطلابه من نفس مصدر
-/// TeacherRosterView (`/api/teacher/roster`)، ويقدر يختار "كل طلاب الفصل"
-/// أو طالب معيّن.
+/// نموذج إنشاء واجب جديد - معلم بس. يجيب فصوله من نفس مصدر TeacherRosterView
+/// (`/api/teacher/roster`) ويختار فصل - الواجب دايمًا لكل طلاب الفصل (ما فيه
+/// خيار استهداف طالب معيّن، الباك إند ما يدعمه بعد الآن).
 struct AssignmentCreateSheet: View {
     var onCreated: () async -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var classes: [SchoolClass] = []
-    @State private var students: [SchoolStudent] = []
     @State private var selectedClassId: String?
-    @State private var selectedTargetId: String?
     @State private var subject = ""
     @State private var title = ""
     @State private var content = ""
     @State private var isSaving = false
     @State private var errorMessage: String?
-
-    private var studentsInSelectedClass: [SchoolStudent] {
-        guard let selectedClassId else { return [] }
-        return students.filter { $0.classId == selectedClassId }
-    }
 
     var body: some View {
         NavigationStack {
@@ -28,12 +21,6 @@ struct AssignmentCreateSheet: View {
                 Section {
                     Picker(Loc.t("assignment_class_label"), selection: $selectedClassId) {
                         ForEach(classes) { c in Text(c.name).tag(Optional(c.id)) }
-                    }
-                    Picker(Loc.t("assignment_target_label"), selection: $selectedTargetId) {
-                        Text(Loc.t("assignment_target_all")).tag(String?.none)
-                        ForEach(studentsInSelectedClass) { s in
-                            Text(s.fullName ?? s.username).tag(Optional(s.userId))
-                        }
                     }
                 }
                 Section {
@@ -78,7 +65,6 @@ struct AssignmentCreateSheet: View {
     private func loadRoster() async {
         let roster = try? await APIClient.shared.teacherRoster()
         classes = roster?.classes ?? []
-        students = roster?.students ?? []
         if selectedClassId == nil { selectedClassId = classes.first?.id }
     }
 
@@ -92,7 +78,6 @@ struct AssignmentCreateSheet: View {
         do {
             try await APIClient.shared.createAssignment(
                 classId: selectedClassId,
-                targetStudentId: selectedTargetId,
                 subject: subject,
                 title: title,
                 content: content
