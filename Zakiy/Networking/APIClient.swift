@@ -666,6 +666,22 @@ final class APIClient {
         try await sendVoid(request)
     }
 
+    // ---- كشف الدرجات - معلم بس (محجوب عن الحساب الفردي بالكامل بالباك إند) ----
+
+    func teacherGradesheet(classId: String) async throws -> [GradesheetStudentRow] {
+        struct Response: Decodable { let students: [GradesheetStudentRow] }
+        let result: Response = try await send(authorizedRequest("/api/teacher/gradesheet?class_id=\(classId)"))
+        return result.students
+    }
+
+    /// يحدّث المشاركة والمهام الأدائية بس - المجموع محسوب سيرفريًا دايمًا،
+    /// الشاشة تعيد جلب الصف بعد نجاح الحفظ عشان تحدّث المجموع المعروض.
+    func updateGradesheetRow(studentId: String, classId: String, participation: Double, performanceTasks: Double) async throws {
+        var request = authorizedRequest("/api/teacher/gradesheet/\(studentId)", method: "PATCH")
+        jsonBody(&request, ["class_id": classId, "participation": participation, "performance_tasks": performanceTasks])
+        try await sendVoid(request)
+    }
+
     // ---- Student ----
 
     func studentSchedule() async throws -> [ClassScheduleEntry] {

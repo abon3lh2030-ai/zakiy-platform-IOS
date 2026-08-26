@@ -142,10 +142,12 @@ struct MadrasatiHubView: View {
                         MadrasatiLinkCard(icon: "📝", label: Loc.t("quizzes"), badge: .zakiy)
                     }
                     .buttonStyle(.plain)
-                    // "كشف الدرجات" (نفس بطاقة gradesheetBtn/mdTeacherGradesheetBtn
-                    // بالموقع) ما لها شاشة مقابلة بتطبيق iOS بعد - ميزة موقع فقط
-                    // لحد الآن، فتجاوزناها هنا بدل ما نبني شاشة جديدة (خارج نطاق
-                    // هذي المهمة - إعادة تنظيم الشاشة الحالية بس)
+                    // كشف الدرجات - نفس بطاقة gradesheetBtn/mdTeacherGradesheetBtn
+                    // بالموقع بالضبط (أيقونة 📋 + مفتاح nav_gradesheet)
+                    NavigationLink { GradesheetView() } label: {
+                        MadrasatiLinkCard(icon: "📋", label: Loc.t("nav_gradesheet"), badge: .zakiy)
+                    }
+                    .buttonStyle(.plain)
                 }
 
                 NavigationLink(value: MadrasatiRoute.lessonPrepNew) {

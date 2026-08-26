@@ -630,6 +630,18 @@ enum Loc {
         "btn_save_attendance": "حفظ الحضور",
         "attendance_saved_msg": "✅ تم حفظ الحضور",
 
+        "nav_gradesheet": "كشف الدرجات",
+        "gradesheet_heading": "كشف درجات الطلاب",
+        "gradesheet_desc": "حط درجة المشاركة والمهام الأدائية لكل طالب - درجتي الواجبات والاختبارات تُحسب تلقائيًا من تصحيحك لها، والمجموع يُحسب لحظيًا بدون ما تقدر تعدّله.",
+        "gradesheet_class_label": "الفصل",
+        "gradesheet_no_classes": "ما فيه فصول لك بعد",
+        "gradesheet_empty": "ما فيه طلاب بهذا الفصل",
+        "th_participation": "المشاركة",
+        "th_performance_tasks": "المهام الأدائية",
+        "th_assignments_avg": "الواجبات",
+        "th_quizzes_avg": "الاختبارات",
+        "th_total": "المجموع",
+
         "student_schedule_label": "🗓️ جدولي",
         "student_schedule_heading": "جدول حصصي",
 
@@ -1270,6 +1282,18 @@ enum Loc {
         "attendance_status_absent": "Absent",
         "btn_save_attendance": "Save Attendance",
         "attendance_saved_msg": "✅ Attendance saved",
+
+        "nav_gradesheet": "Gradesheet",
+        "gradesheet_heading": "Students' gradesheet",
+        "gradesheet_desc": "Enter each student's participation and performance-task grades - assignment and quiz grades are computed automatically from your grading, and the total updates live and can't be edited.",
+        "gradesheet_class_label": "Class",
+        "gradesheet_no_classes": "You have no classes yet",
+        "gradesheet_empty": "No students in this class",
+        "th_participation": "Participation",
+        "th_performance_tasks": "Performance tasks",
+        "th_assignments_avg": "Assignments",
+        "th_quizzes_avg": "Quizzes",
+        "th_total": "Total",
 
         "student_schedule_label": "🗓️ My Schedule",
         "student_schedule_heading": "My Class Schedule",

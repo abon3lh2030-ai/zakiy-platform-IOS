@@ -74,6 +74,11 @@ struct TeacherDashboardView: View {
                 NavigationLink { QuizzesListView() } label: {
                     DashboardMenuRow(icon: "list.bullet.clipboard.fill", tint: .teal, title: Loc.t("quizzes"))
                 }
+                // كشف الدرجات - معلم بس (الباك إند require_role("teacher"))، نفس
+                // سبب دمج المكتبة/الواجبات/الاختبارات هنا
+                NavigationLink { GradesheetView() } label: {
+                    DashboardMenuRow(icon: "chart.bar.doc.horizontal.fill", tint: .cyan, title: Loc.t("nav_gradesheet"))
+                }
                 // مدرستي: اختصار الموقع الرسمي + أدوات ذكيّ المستقلة - بدون
                 // قيد دور، نفس سبب دمج المكتبة/الواجبات هنا
                 NavigationLink { MadrasatiHubView() } label: {

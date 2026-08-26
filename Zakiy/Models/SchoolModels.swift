@@ -629,3 +629,35 @@ struct QuizStudentDetail: Decodable {
         case timeLimitMinutes = "time_limit_minutes"
     }
 }
+
+// MARK: - كشف الدرجات (معلم بس - مشاركة/مهام أدائية يدوية يعدّلها المعلم +
+// واجبات/اختبارات محسوبة تلقائيًا بالباك إند من درجاتها الموجودة أصلًا +
+// مجموع يُحسب لحظيًا بالباك إند بدون ما يقدر المعلم يعدّله مباشرة)
+
+/// صف طالب وحد بكشف الدرجات - `assignmentsAvg`/`quizzesAvg` قد تكونان nil
+/// (ما فيه شي مصحّح بعد لهذا الطالب)، و`total` دايمًا محسوبة سيرفريًا.
+struct GradesheetStudentRow: Identifiable, Decodable, Hashable {
+    var id: String { userId }
+
+    let userId: String
+    let username: String
+    let fullName: String?
+    var participation: Double
+    var performanceTasks: Double
+    let assignmentsAvg: Double?
+    let assignmentsCount: Int
+    let quizzesAvg: Double?
+    let quizzesCount: Int
+    let total: Double
+
+    enum CodingKeys: String, CodingKey {
+        case username, participation, total
+        case userId = "user_id"
+        case fullName = "full_name"
+        case performanceTasks = "performance_tasks"
+        case assignmentsAvg = "assignments_avg"
+        case assignmentsCount = "assignments_count"
+        case quizzesAvg = "quizzes_avg"
+        case quizzesCount = "quizzes_count"
+    }
+}
