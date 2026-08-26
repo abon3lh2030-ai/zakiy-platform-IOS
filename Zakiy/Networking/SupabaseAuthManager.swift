@@ -46,6 +46,16 @@ final class SupabaseAuthManager {
         return ""
     }
 
+    /// يخدم شاشة "مدرستي" بس - يفرّق حساب فردي معلم عن حساب فردي طالب/متخرج
+    /// (المتخرج يُعامل زي أي حساب فردي عادي - قيمة "معلم" بس هي اللي لها معنى
+    /// مختلف). نفس منطق `currentUserEducationLevel` بموقع الويب بالضبط.
+    var educationLevel: String? {
+        if case let .string(level)? = session?.user.userMetadata["education_level"] {
+            return level
+        }
+        return nil
+    }
+
     private func observeAuthState() async {
         for await state in client.auth.authStateChanges {
             session = state.session
