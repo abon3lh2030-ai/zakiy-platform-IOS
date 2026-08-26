@@ -25,6 +25,14 @@ struct QuizDetailView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         header(detail)
 
+                        if detail.platform == "madrasati" {
+                            PlatformLinkEditor(currentLink: detail.externalLink) { newLink in
+                                let trimmed = newLink.trimmingCharacters(in: .whitespacesAndNewlines)
+                                _ = try? await APIClient.shared.updateQuizLink(id: quizId, externalLink: trimmed.isEmpty ? nil : trimmed)
+                                await load()
+                            }
+                        }
+
                         if !detail.isPublished {
                             actionsRow
                         }
@@ -35,7 +43,7 @@ struct QuizDetailView: View {
 
                         Divider()
 
-                        if detail.isPublished {
+                        if detail.isPublished && detail.platform == "zakiy" {
                             StudentsSection(quizId: quizId, questions: detail.questions, students: detail.students)
                         }
                     }
@@ -73,8 +81,13 @@ struct QuizDetailView: View {
             Text(detail.subject).font(.caption).foregroundStyle(.secondary)
             Text(detail.title).font(.title2.weight(.bold))
             HStack(spacing: 8) {
-                Text(Loc.t("quiz_time_limit_minutes_format", detail.timeLimitMinutes))
-                Text("•")
+                if let timeLimitMinutes = detail.timeLimitMinutes {
+                    Text(Loc.t("quiz_time_limit_minutes_format", timeLimitMinutes))
+                    Text("•")
+                } else {
+                    Text(Loc.t("platform_madrasati_badge")).foregroundStyle(.brown)
+                    Text("•")
+                }
                 Text(detail.isPublished ? Loc.t("quiz_status_published") : Loc.t("quiz_status_draft"))
                     .foregroundStyle(detail.isPublished ? Color.green : Color.orange)
             }

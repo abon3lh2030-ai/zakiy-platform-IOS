@@ -27,7 +27,7 @@ struct QuizzesListView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List(quizzes) { quiz in
-                    Button { openedQuiz = QuizRoute(id: quiz.id) } label: {
+                    Button { openedQuiz = QuizRoute(id: quiz.id, title: quiz.title, platform: quiz.platform, externalLink: quiz.externalLink) } label: {
                         QuizRow(quiz: quiz, isTeacher: isTeacher)
                     }
                     .buttonStyle(.plain)
@@ -52,6 +52,8 @@ struct QuizzesListView: View {
         .navigationDestination(item: $openedQuiz) { route in
             if isTeacher {
                 QuizDetailView(quizId: route.id)
+            } else if route.platform == "madrasati" {
+                QuizMadrasatiOpenView(title: route.title, externalLink: route.externalLink)
             } else {
                 QuizTakeView(quizId: route.id)
             }
@@ -88,7 +90,11 @@ private struct QuizRow: View {
 
     @ViewBuilder
     private var statusBadge: some View {
-        if isTeacher {
+        if quiz.platform == "madrasati" {
+            Text(Loc.t("platform_madrasati_badge"))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.brown)
+        } else if isTeacher {
             if quiz.isPublished {
                 let done = quiz.submittedCount ?? 0
                 let total = quiz.totalCount ?? 0
@@ -113,7 +119,29 @@ private struct QuizRow: View {
 }
 
 /// غلاف Identifiable بسيط لـ navigationDestination(item:) - نفس أسلوب
-/// AssignmentRoute/NoteRoute المتبع بباقي الميزات
+/// AssignmentRoute/NoteRoute المتبع بباقي الميزات. يحمل platform/externalLink
+/// كمان (لا بس id) عشان الطالب يتوجّه مباشرة لشاشة "افتح على مدرستي" بدل
+/// QuizTakeView بدون طلب شبكة إضافي.
 struct QuizRoute: Identifiable, Hashable {
     let id: String
+    let title: String
+    let platform: String
+    let externalLink: String?
+}
+
+/// وجهة الطالب لاختبار منصته "مدرستي" - بدون /start ولا أسئلة، بس زر فتح
+/// مباشر (الباك إند أصلًا يرفض /start بـ400 لهذا النوع كطبقة حماية إضافية)
+private struct QuizMadrasatiOpenView: View {
+    let title: String
+    let externalLink: String?
+
+    var body: some View {
+        ScrollView {
+            OpenOnMadrasatiView(externalLink: externalLink)
+                .padding()
+        }
+        .background(Color.appBackground)
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+    }
 }

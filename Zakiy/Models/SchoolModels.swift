@@ -386,14 +386,19 @@ struct AssignmentSummary: Identifiable, Decodable, Hashable {
     let totalCount: Int?
     let submitted: Bool?
     let grade: String?
+    /// "zakiy" (افتراضي) أو "madrasati" - لو مدرستي، الحل كامل برة ذكّي
+    /// وقوائم العرض تخفي "X/Y سلّموا"/حالة التسليم (تبقى دايمًا صفر/فاضية)
+    let platform: String
+    let externalLink: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, subject, title, grade, submitted
+        case id, subject, title, grade, submitted, platform
         case classId = "class_id"
         case className = "class_name"
         case createdAt = "created_at"
         case submittedCount = "submitted_count"
         case totalCount = "total_count"
+        case externalLink = "external_link"
     }
 }
 
@@ -407,31 +412,51 @@ struct AssignmentStudentStatus: Identifiable, Decodable, Hashable {
     let fileName: String?
     let note: String?
     let grade: String?
+    /// إجابات الطالب لو الواجب من نوع "questions" (مفتاحها معرّف السؤال
+    /// كنص) - nil دايمًا لواجب من نوع "file"
+    let answers: [String: String]?
+    let isAutoGraded: Bool?
+    let score: Int?
+    let totalQuestions: Int?
 
     enum CodingKeys: String, CodingKey {
-        case username, submitted, note, grade
+        case username, submitted, note, grade, answers
         case userId = "user_id"
         case fullName = "full_name"
         case submittedAt = "submitted_at"
         case fileName = "file_name"
+        case isAutoGraded = "is_auto_graded"
+        case score
+        case totalQuestions = "total_questions"
     }
 }
 
 struct AssignmentSubmission: Decodable, Hashable {
-    let fileName: String
+    /// nil لواجب من نوع "questions" (ما فيه ملف إطلاقًا)
+    let fileName: String?
     let note: String?
     let submittedAt: String
     let grade: String?
+    let answers: [String: String]?
+    let isAutoGraded: Bool?
+    let score: Int?
+    let totalQuestions: Int?
 
     enum CodingKeys: String, CodingKey {
-        case note, grade
+        case note, grade, answers
         case fileName = "file_name"
         case submittedAt = "submitted_at"
+        case isAutoGraded = "is_auto_graded"
+        case score
+        case totalQuestions = "total_questions"
     }
 }
 
 /// تفصيل واجب وحد - `students` تجي من مسار المعلم بس، `submission` من مسار
-/// الطالب بس (الآخر يبقى nil دايمًا حسب مين طلبها).
+/// الطالب بس (الآخر يبقى nil دايمًا حسب مين طلبها). `questions` موجودة بس
+/// لو `submissionType == "questions"` (نفس شكل أسئلة الاختبارات بالضبط -
+/// `QuizQuestionFull` تغطي الحالتين، correct_answer غايب كليًا بمنظور الطالب
+/// فيصير nil تلقائيًا).
 struct AssignmentDetail: Decodable {
     let id: String
     let subject: String
@@ -441,13 +466,19 @@ struct AssignmentDetail: Decodable {
     /// واجبات قديمة قد تكون محفوظة بهذا الحقل من قبل ما صار الواجب دايمًا
     /// لكل الفصل - نبقيه هنا بس للتوافق مع القراءة، الواجهة ما تسمح بتعيينه
     let targetStudentId: String?
+    let submissionType: String
+    let platform: String
+    let externalLink: String?
+    let questions: [QuizQuestionFull]?
     let students: [AssignmentStudentStatus]?
     let submission: AssignmentSubmission?
 
     enum CodingKeys: String, CodingKey {
-        case id, subject, title, content, students, submission
+        case id, subject, title, content, students, submission, questions, platform
         case classId = "class_id"
         case targetStudentId = "target_student_id"
+        case submissionType = "submission_type"
+        case externalLink = "external_link"
     }
 }
 
@@ -461,9 +492,13 @@ struct QuizSummary: Identifiable, Decodable, Hashable {
     let classId: String?
     let subject: String
     let title: String
-    let timeLimitMinutes: Int
+    /// nil لاختبار منصة "madrasati" (يُحل كامل برة ذكّي، ما فيه وقت محدد هنا)
+    let timeLimitMinutes: Int?
     let isPublished: Bool
     let createdAt: String
+    /// "zakiy" (افتراضي) أو "madrasati"
+    let platform: String
+    let externalLink: String?
     // معلم
     let className: String?
     let submittedCount: Int?
@@ -476,11 +511,12 @@ struct QuizSummary: Identifiable, Decodable, Hashable {
     let grade: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, subject, title, submitted, grade
+        case id, subject, title, submitted, grade, platform
         case classId = "class_id"
         case timeLimitMinutes = "time_limit_minutes"
         case isPublished = "is_published"
         case createdAt = "created_at"
+        case externalLink = "external_link"
         case className = "class_name"
         case submittedCount = "submitted_count"
         case totalCount = "total_count"
@@ -497,18 +533,24 @@ struct QuizBase: Decodable, Hashable {
     let classId: String?
     let subject: String
     let title: String
-    let timeLimitMinutes: Int
+    let timeLimitMinutes: Int?
     let isPublished: Bool
+    let platform: String
+    let externalLink: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, subject, title
+        case id, subject, title, platform
         case classId = "class_id"
         case timeLimitMinutes = "time_limit_minutes"
         case isPublished = "is_published"
+        case externalLink = "external_link"
     }
 }
 
-/// سؤال بمنظور المعلم - فيه correct_answer (اختياري، ممكن ما يكون معلّم بعد)
+/// سؤال بمنظور المعلم - فيه correct_answer (اختياري، ممكن ما يكون معلّم بعد).
+/// نفس الـstruct تُستخدم لأسئلة الاختبارات وأسئلة الواجبات من نوع
+/// "questions" كلاهما (شكل JSON مطابق تمامًا)، وأيضًا لمنظور الطالب - يومها
+/// correct_answer يوصل غايب كليًا فيصير nil تلقائيًا (بدون أي نوع منفصل).
 struct QuizQuestionFull: Identifiable, Decodable, Hashable {
     let id: String
     let orderIndex: Int
@@ -523,22 +565,6 @@ struct QuizQuestionFull: Identifiable, Decodable, Hashable {
         case questionType = "question_type"
         case questionText = "question_text"
         case correctAnswer = "correct_answer"
-    }
-}
-
-/// سؤال بمنظور الطالب - بدون correct_answer إطلاقًا (الباك إند ما يرسله)
-struct QuizQuestionForStudent: Identifiable, Decodable, Hashable {
-    let id: String
-    let orderIndex: Int
-    let questionType: String
-    let questionText: String
-    let choices: [String]?
-
-    enum CodingKeys: String, CodingKey {
-        case id, choices
-        case orderIndex = "order_index"
-        case questionType = "question_type"
-        case questionText = "question_text"
     }
 }
 
@@ -577,16 +603,19 @@ struct QuizDetail: Decodable {
     let classId: String?
     let subject: String
     let title: String
-    let timeLimitMinutes: Int
+    let timeLimitMinutes: Int?
     let isPublished: Bool
+    let platform: String
+    let externalLink: String?
     let questions: [QuizQuestionFull]
     let students: [QuizStudentStatus]
 
     enum CodingKeys: String, CodingKey {
-        case id, subject, title, questions, students
+        case id, subject, title, questions, students, platform
         case classId = "class_id"
         case timeLimitMinutes = "time_limit_minutes"
         case isPublished = "is_published"
+        case externalLink = "external_link"
     }
 }
 
@@ -620,13 +649,16 @@ struct QuizStudentDetail: Decodable {
     let id: String
     let subject: String
     let title: String
-    let timeLimitMinutes: Int
-    let questions: [QuizQuestionForStudent]
+    let timeLimitMinutes: Int?
+    let platform: String
+    let externalLink: String?
+    let questions: [QuizQuestionFull]
     let attempt: QuizAttemptRecord?
 
     enum CodingKeys: String, CodingKey {
-        case id, subject, title, questions, attempt
+        case id, subject, title, questions, attempt, platform
         case timeLimitMinutes = "time_limit_minutes"
+        case externalLink = "external_link"
     }
 }
 

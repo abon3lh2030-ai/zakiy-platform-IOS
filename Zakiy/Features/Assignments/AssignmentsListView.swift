@@ -83,7 +83,11 @@ private struct AssignmentRow: View {
 
     @ViewBuilder
     private var statusBadge: some View {
-        if isTeacher {
+        if assignment.platform == "madrasati" {
+            Text(Loc.t("platform_madrasati_badge"))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.brown)
+        } else if isTeacher {
             let done = assignment.submittedCount ?? 0
             let total = assignment.totalCount ?? 0
             Text(Loc.t("assignment_submitted_count", done, total))

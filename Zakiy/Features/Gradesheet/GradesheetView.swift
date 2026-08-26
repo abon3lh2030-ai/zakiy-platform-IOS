@@ -13,6 +13,9 @@ struct GradesheetView: View {
     @State private var isLoadingClasses = true
     @State private var isLoadingRows = false
     @State private var errorMessage: String?
+    @State private var isExporting = false
+    @State private var exportURLString: String?
+    @State private var showExportSheet = false
 
     var body: some View {
         Group {
@@ -40,6 +43,26 @@ struct GradesheetView: View {
                     }
 
                     Section {
+                        HStack(spacing: 12) {
+                            Button {
+                                Task { await export(format: "pdf") }
+                            } label: {
+                                if isExporting { ProgressView() } else { Text(Loc.t("btn_export_pdf")) }
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(isExporting || selectedClassId == nil)
+
+                            Button {
+                                Task { await export(format: "csv") }
+                            } label: {
+                                Text(Loc.t("btn_export_csv"))
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(isExporting || selectedClassId == nil)
+                        }
+                    }
+
+                    Section {
                         if isLoadingRows {
                             ProgressView(Loc.t("loading")).frame(maxWidth: .infinity)
                         } else if rows.isEmpty {
@@ -63,6 +86,26 @@ struct GradesheetView: View {
         .task { await loadClasses() }
         .task(id: selectedClassId) { await loadRows() }
         .refreshable { await loadRows() }
+        .sheet(isPresented: $showExportSheet) {
+            if let exportURLString {
+                GradesheetExportSheet(urlString: exportURLString)
+            }
+        }
+    }
+
+    /// يولّد ملف PDF/CSV لفصل الكشف المختار ويعرض رابطه كـQR + رابط قابل
+    /// للفتح/المشاركة (GradesheetExportSheet) بدل تنزيله مباشرة بالتطبيق.
+    private func export(format: String) async {
+        guard let selectedClassId else { return }
+        isExporting = true
+        errorMessage = nil
+        do {
+            exportURLString = try await APIClient.shared.teacherExportGradesheet(classId: selectedClassId, format: format)
+            showExportSheet = true
+        } catch {
+            errorMessage = Loc.t("err_gradesheet_export")
+        }
+        isExporting = false
     }
 
     private func loadClasses() async {

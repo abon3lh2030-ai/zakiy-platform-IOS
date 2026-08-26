@@ -56,7 +56,7 @@ struct QuizTakeView: View {
                 // نفترض "الآن" كبداية احتياطًا (يخلي العدّاد يشتغل بأي حال
                 // بدل ما يتعطّل لو صيغة الوقت اختلفت عن المتوقع)
                 let startedDate = Self.parseDate(started.startedAt) ?? Date()
-                deadline = startedDate.addingTimeInterval(Double(d.timeLimitMinutes * 60))
+                deadline = startedDate.addingTimeInterval(Double((d.timeLimitMinutes ?? 0) * 60))
                 startTimer()
             }
         } catch {
@@ -122,7 +122,7 @@ struct QuizTakeView: View {
         }
     }
 
-    private func sortedQuestions(_ detail: QuizStudentDetail) -> [QuizQuestionForStudent] {
+    private func sortedQuestions(_ detail: QuizStudentDetail) -> [QuizQuestionFull] {
         detail.questions.sorted { $0.orderIndex < $1.orderIndex }
     }
 
@@ -208,10 +208,11 @@ struct QuizTakeView: View {
     }()
 }
 
-// MARK: - سؤال + منطقة الإجابة عليه
+// MARK: - سؤال + منطقة الإجابة عليه - غير private عشان AssignmentDetailView
+// يعيد استخدامها بواجب نوع "questions" (نفس شكل عرض/إجابة السؤال بالضبط)
 
-private struct QuestionAnswerCard: View {
-    let question: QuizQuestionForStudent
+struct QuestionAnswerCard: View {
+    let question: QuizQuestionFull
     @Binding var answer: String
 
     var body: some View {

@@ -15,10 +15,16 @@ struct QuizCreateView: View {
     @State private var title: String
     @State private var timeLimitMinutes: Int
     @State private var questions: [QuizQuestionDraft]
+    /// المنصة تُختار وقت الإنشاء بس - شاشة التعديل (مسودة قبل النشر) ما تغيّرها،
+    /// رابط مدرستي نفسه يُدار من شاشة التفصيل (PlatformLinkEditor) دايمًا
+    @State private var platform: String
+    @State private var externalLink = ""
     @State private var isSaving = false
     @State private var errorMessage: String?
 
     private var isEditing: Bool { editing != nil }
+    /// المنصة الفعلية المعتمدة بالفورم - مقفلة على قيمة الاختبار الموجود لو تعديل
+    private var effectivePlatform: String { isEditing ? (editing?.platform ?? "zakiy") : platform }
 
     init(editing: QuizDetail? = nil, onSaved: @escaping () async -> Void) {
         self.editing = editing
@@ -27,6 +33,7 @@ struct QuizCreateView: View {
         _title = State(initialValue: editing?.title ?? "")
         _timeLimitMinutes = State(initialValue: editing?.timeLimitMinutes ?? 20)
         _selectedClassId = State(initialValue: editing?.classId)
+        _platform = State(initialValue: editing?.platform ?? "zakiy")
         _questions = State(initialValue: editing?.questions
             .sorted { $0.orderIndex < $1.orderIndex }
             .map(QuizQuestionDraft.init(from:)) ?? [])
@@ -46,18 +53,28 @@ struct QuizCreateView: View {
                 Section {
                     TextField(Loc.t("quiz_subject_placeholder"), text: $subject)
                     TextField(Loc.t("quiz_title_placeholder"), text: $title)
-                    Stepper(Loc.t("quiz_time_limit_stepper_label", timeLimitMinutes), value: $timeLimitMinutes, in: 1...300)
+                    if effectivePlatform == "zakiy" {
+                        Stepper(Loc.t("quiz_time_limit_stepper_label", timeLimitMinutes), value: $timeLimitMinutes, in: 1...300)
+                    }
                 }
 
-                Section(Loc.t("quiz_questions_heading")) {
-                    ForEach($questions) { $question in
-                        QuestionEditorCard(question: $question, onRemove: { removeQuestion(id: question.id) })
-                            .listRowInsets(EdgeInsets())
-                            .padding(.vertical, 6)
-                            .listRowSeparator(.hidden)
+                if !isEditing {
+                    Section {
+                        PlatformPickerField(platform: $platform, externalLink: $externalLink)
                     }
-                    Button(Loc.t("btn_add_question")) {
-                        questions.append(QuizQuestionDraft())
+                }
+
+                if effectivePlatform == "zakiy" {
+                    Section(Loc.t("quiz_questions_heading")) {
+                        ForEach($questions) { $question in
+                            QuestionEditorCard(question: $question, onRemove: { removeQuestion(id: question.id) })
+                                .listRowInsets(EdgeInsets())
+                                .padding(.vertical, 6)
+                                .listRowSeparator(.hidden)
+                        }
+                        Button(Loc.t("btn_add_question")) {
+                            questions.append(QuizQuestionDraft())
+                        }
                     }
                 }
 
@@ -99,22 +116,35 @@ struct QuizCreateView: View {
 
     private func save() async {
         errorMessage = nil
-        let payloads = questions.compactMap { $0.toPayload() }
-        guard !payloads.isEmpty else {
-            errorMessage = Loc.t("err_quiz_need_question")
-            return
+        var payloads: [[String: Any]]?
+        if effectivePlatform == "zakiy" {
+            let built = questions.compactMap { $0.toPayload() }
+            guard !built.isEmpty else {
+                errorMessage = Loc.t("err_quiz_need_question")
+                return
+            }
+            payloads = built
         }
         isSaving = true
         do {
             if let editing {
-                _ = try await APIClient.shared.updateQuiz(id: editing.id, subject: subject, title: title, timeLimitMinutes: timeLimitMinutes, questions: payloads)
+                _ = try await APIClient.shared.updateQuiz(
+                    id: editing.id, subject: subject, title: title,
+                    timeLimitMinutes: effectivePlatform == "zakiy" ? timeLimitMinutes : nil,
+                    questions: payloads
+                )
             } else {
                 guard let selectedClassId else {
                     errorMessage = Loc.t("err_quiz_need_class")
                     isSaving = false
                     return
                 }
-                _ = try await APIClient.shared.createQuiz(classId: selectedClassId, subject: subject, title: title, timeLimitMinutes: timeLimitMinutes, questions: payloads)
+                _ = try await APIClient.shared.createQuiz(
+                    classId: selectedClassId, subject: subject, title: title,
+                    timeLimitMinutes: platform == "zakiy" ? timeLimitMinutes : nil,
+                    questions: payloads, platform: platform,
+                    externalLink: externalLink.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : externalLink
+                )
             }
             await onSaved()
             dismiss()
@@ -125,9 +155,11 @@ struct QuizCreateView: View {
     }
 }
 
-// MARK: - حالة سؤال محلية أثناء البناء (قبل تحويله لقاموس الطلب)
+// MARK: - حالة سؤال محلية أثناء البناء (قبل تحويله لقاموس الطلب) - غير
+// private عشان AssignmentCreateSheet يعيد استخدامها لأسئلة واجب نوع
+// "questions" (نفس شكل الطلب بالضبط لصنفي الأسئلة).
 
-private struct QuizQuestionDraft: Identifiable {
+struct QuizQuestionDraft: Identifiable {
     let id = UUID()
     var questionType: String = "mcq"
     var text: String = ""
@@ -179,9 +211,9 @@ private struct QuizQuestionDraft: Identifiable {
     }
 }
 
-// MARK: - محرر سؤال واحد
+// MARK: - محرر سؤال واحد - غير private (نفس سبب QuizQuestionDraft فوق)
 
-private struct QuestionEditorCard: View {
+struct QuestionEditorCard: View {
     @Binding var question: QuizQuestionDraft
     var onRemove: () -> Void
 

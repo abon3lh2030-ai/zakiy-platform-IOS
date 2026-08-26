@@ -580,11 +580,32 @@ final class APIClient {
     // ---- دفتر الواجبات - معلم (محجوب عن الحساب الفردي بالكامل بالباك إند) ----
 
     /// الواجب دايمًا لكل طلاب الفصل (الباك إند ما يقبل/يستخدم target_student_id
-    /// بعد الآن - اختيار طالب معيّن انشال من واجهة الإنشاء)
-    func createAssignment(classId: String, subject: String, title: String, content: String) async throws {
+    /// بعد الآن - اختيار طالب معيّن انشال من واجهة الإنشاء). `submissionType`
+    /// "file" أو "questions" (تُهمل لو platform "madrasati" - نرسل "file"
+    /// افتراضيًا بالحالتين والباك إند يتجاهلها أصلًا). `questions` بنفس شكل
+    /// قواميس QuizCreateView (`{question_type, question_text, choices,
+    /// correct_answer}`).
+    func createAssignment(
+        classId: String, subject: String, title: String, content: String,
+        submissionType: String = "file", questions: [[String: Any]]? = nil,
+        platform: String = "zakiy", externalLink: String? = nil
+    ) async throws {
         var request = authorizedRequest("/api/teacher/assignments", method: "POST")
-        let payload: [String: Any] = ["class_id": classId, "subject": subject, "title": title, "content": content]
+        var payload: [String: Any] = [
+            "class_id": classId, "subject": subject, "title": title, "content": content,
+            "submission_type": submissionType, "platform": platform,
+        ]
+        payload["external_link"] = externalLink ?? NSNull()
+        if let questions { payload["questions"] = questions }
         jsonBody(&request, payload)
+        try await sendVoid(request)
+    }
+
+    /// تعديل رابط واجب منصة مدرستي بعد الإنشاء - الحقل الوحيد القابل للتعديل
+    /// بواجب موجود (الشاشة تعيد جلب التفصيل كامل بعد النجاح)
+    func updateAssignmentLink(id: String, externalLink: String?) async throws {
+        var request = authorizedRequest("/api/teacher/assignments/\(id)", method: "PATCH")
+        jsonBody(&request, ["external_link": externalLink ?? NSNull()])
         try await sendVoid(request)
     }
 
@@ -619,9 +640,19 @@ final class APIClient {
     /// `questions` مصفوفة قواميس جاهزة بشكل `{question_type, question_text,
     /// choices, correct_answer}` - شاشة الإنشاء/التعديل هي اللي تبنيها من
     /// حالتها المحلية (نفس أسلوب `teacherSaveManualAttendance`)
-    func createQuiz(classId: String, subject: String, title: String, timeLimitMinutes: Int, questions: [[String: Any]]) async throws -> QuizBase {
+    /// `timeLimitMinutes`/`questions` تُهمل لو platform "madrasati" (الباك
+    /// إند يتجاهلها أصلًا) - تُمرّر nil يومها فتُحذف من الطلب كليًا.
+    func createQuiz(
+        classId: String, subject: String, title: String,
+        timeLimitMinutes: Int?, questions: [[String: Any]]?,
+        platform: String = "zakiy", externalLink: String? = nil
+    ) async throws -> QuizBase {
         var request = authorizedRequest("/api/teacher/quizzes", method: "POST")
-        jsonBody(&request, ["class_id": classId, "subject": subject, "title": title, "time_limit_minutes": timeLimitMinutes, "questions": questions])
+        var payload: [String: Any] = ["class_id": classId, "subject": subject, "title": title, "platform": platform]
+        payload["external_link"] = externalLink ?? NSNull()
+        if let timeLimitMinutes { payload["time_limit_minutes"] = timeLimitMinutes }
+        if let questions { payload["questions"] = questions }
+        jsonBody(&request, payload)
         return try await send(request)
     }
 
@@ -647,6 +678,14 @@ final class APIClient {
         if let timeLimitMinutes { payload["time_limit_minutes"] = timeLimitMinutes }
         if let questions { payload["questions"] = questions }
         jsonBody(&request, payload)
+        return try await send(request)
+    }
+
+    /// تعديل رابط اختبار منصة مدرستي - يشتغل دايمًا حتى بعد النشر (عكس بقية
+    /// حقول updateQuiz اللي تتقفل بعد النشر)
+    func updateQuizLink(id: String, externalLink: String?) async throws -> QuizBase {
+        var request = authorizedRequest("/api/teacher/quizzes/\(id)", method: "PATCH")
+        jsonBody(&request, ["external_link": externalLink ?? NSNull()])
         return try await send(request)
     }
 
@@ -680,6 +719,14 @@ final class APIClient {
         var request = authorizedRequest("/api/teacher/gradesheet/\(studentId)", method: "PATCH")
         jsonBody(&request, ["class_id": classId, "participation": participation, "performance_tasks": performanceTasks])
         try await sendVoid(request)
+    }
+
+    /// يولّد ملف PDF/CSV لكشف درجات فصل ويرجّع رابط تنزيل موقّع (صالح ساعة
+    /// وحدة) - الشاشة تعرضه كـQR + رابط قابل للمشاركة بدل تنزيله مباشرة.
+    func teacherExportGradesheet(classId: String, format: String) async throws -> String {
+        struct Response: Decodable { let url: String }
+        let result: Response = try await send(authorizedRequest("/api/teacher/gradesheet/export?class_id=\(classId)&format=\(format)"))
+        return result.url
     }
 
     // ---- Student ----
@@ -719,6 +766,14 @@ final class APIClient {
         body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
         request.httpBody = body
 
+        try await sendVoid(request)
+    }
+
+    /// تسليم واجب من نوع "questions" - جسم JSON عادي (عكس submitAssignment
+    /// اللي يرفع ملف multipart) بمفتاح واحد answers بشكل {معرّف السؤال: الإجابة}
+    func submitAssignmentAnswers(id: String, answers: [String: String]) async throws {
+        var request = authorizedRequest("/api/student/assignments/\(id)/submit", method: "POST")
+        jsonBody(&request, ["answers": answers])
         try await sendVoid(request)
     }
 

@@ -12,6 +12,10 @@ struct AssignmentCreateSheet: View {
     @State private var subject = ""
     @State private var title = ""
     @State private var content = ""
+    @State private var platform = "zakiy"
+    @State private var externalLink = ""
+    @State private var submissionType = "file"
+    @State private var questions: [QuizQuestionDraft] = []
     @State private var isSaving = false
     @State private var errorMessage: String?
 
@@ -37,6 +41,35 @@ struct AssignmentCreateSheet: View {
                             }
                         }
                 }
+
+                Section {
+                    PlatformPickerField(platform: $platform, externalLink: $externalLink)
+                }
+
+                if platform == "zakiy" {
+                    Section {
+                        Picker(Loc.t("submission_type_label"), selection: $submissionType) {
+                            Text(Loc.t("submission_type_file")).tag("file")
+                            Text(Loc.t("submission_type_questions")).tag("questions")
+                        }
+                        .pickerStyle(.segmented)
+                    }
+
+                    if submissionType == "questions" {
+                        Section(Loc.t("quiz_questions_heading")) {
+                            ForEach($questions) { $question in
+                                QuestionEditorCard(question: $question, onRemove: { removeQuestion(id: question.id) })
+                                    .listRowInsets(EdgeInsets())
+                                    .padding(.vertical, 6)
+                                    .listRowSeparator(.hidden)
+                            }
+                            Button(Loc.t("btn_add_question")) {
+                                questions.append(QuizQuestionDraft())
+                            }
+                        }
+                    }
+                }
+
                 if let errorMessage {
                     Text(errorMessage).foregroundStyle(.red).font(.footnote)
                 }
@@ -68,19 +101,38 @@ struct AssignmentCreateSheet: View {
         if selectedClassId == nil { selectedClassId = classes.first?.id }
     }
 
+    private func removeQuestion(id: UUID) {
+        questions.removeAll { $0.id == id }
+    }
+
     private func create() async {
         guard let selectedClassId else {
             errorMessage = Loc.t("err_assignment_need_class")
             return
         }
-        isSaving = true
         errorMessage = nil
+
+        var questionPayloads: [[String: Any]]?
+        if platform == "zakiy" && submissionType == "questions" {
+            let payloads = questions.compactMap { $0.toPayload() }
+            guard !payloads.isEmpty else {
+                errorMessage = Loc.t("err_assignment_need_question")
+                return
+            }
+            questionPayloads = payloads
+        }
+
+        isSaving = true
         do {
             try await APIClient.shared.createAssignment(
                 classId: selectedClassId,
                 subject: subject,
                 title: title,
-                content: content
+                content: content,
+                submissionType: submissionType,
+                questions: questionPayloads,
+                platform: platform,
+                externalLink: externalLink.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : externalLink
             )
             await onCreated()
             dismiss()
