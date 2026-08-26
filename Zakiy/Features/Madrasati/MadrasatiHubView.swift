@@ -77,7 +77,11 @@ struct MadrasatiHubView: View {
         .task { await loadLists() }
         .refreshable { await loadLists() }
         .sheet(isPresented: $showOfficialSite) {
-            SafariView(url: URL(string: "https://schools.madrasati.sa")!)
+            // /Auth/SignIn يحوّل مباشرة لتسجيل الدخول الحقيقي (Microsoft Entra
+            // ID) بدل الصفحة الرئيسية التسويقية العامة - تأكدنا إن الموقع
+            // العام ما فيه صفحات فرعية عامة (الصفحات الفعلية داخل Microsoft
+            // Teams بعد الدخول، خاصة بكل مدرسة)
+            SafariView(url: URL(string: "https://schools.madrasati.sa/Auth/SignIn")!)
         }
         .navigationDestination(for: MadrasatiRoute.self) { route in
             switch route {
