@@ -773,4 +773,139 @@ final class APIClient {
         jsonBody(&request, ["product_id": productID, "transaction_id": transactionID])
         return try await send(request)
     }
+
+    // MARK: - مدرستي: أدوات ذكيّ المستقلة (اختصار موقع مدرستي + أدوات ذكاء
+    // اصطناعي للمعلم/الطالب - أي حساب مسجّل دخول، بدون قيد دور)
+
+    /// يحوّل محتوى Codable (شكل `content` بكل أدوات مدرستي) لقاموس JSON خام
+    /// عشان يندمج مع بقية حقول الطلب داخل نفس `jsonBody([String: Any])`
+    private func toDict<T: Encodable>(_ value: T) -> [String: Any] {
+        guard let data = try? JSONEncoder().encode(value),
+              let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [:] }
+        return dict
+    }
+
+    // ---- تحضير الدرس الذكي (معلم) ----
+
+    func generateLessonPrep(subject: String, gradeLevel: String, unit: String, lessonTitle: String, lang: String) async throws -> LessonPrepContent {
+        var request = authorizedRequest("/api/lesson-prep/generate", method: "POST")
+        jsonBody(&request, ["subject": subject, "grade_level": gradeLevel, "unit": unit, "lesson_title": lessonTitle, "lang": lang])
+        let result: ContentRawResponse = try await send(request)
+        return try AiJSON.decode(result.contentRaw, as: LessonPrepContent.self)
+    }
+
+    func saveLessonPrep(subject: String, gradeLevel: String, unit: String, lessonTitle: String, content: LessonPrepContent) async throws -> LessonPrepDetail {
+        var request = authorizedRequest("/api/lesson-prep", method: "POST")
+        var payload: [String: Any] = ["subject": subject, "grade_level": gradeLevel, "unit": unit, "lesson_title": lessonTitle]
+        payload["content"] = toDict(content)
+        jsonBody(&request, payload)
+        return try await send(request)
+    }
+
+    func updateLessonPrep(id: String, subject: String, gradeLevel: String, unit: String, lessonTitle: String, content: LessonPrepContent) async throws -> LessonPrepDetail {
+        var request = authorizedRequest("/api/lesson-prep/\(id)", method: "PATCH")
+        var payload: [String: Any] = ["subject": subject, "grade_level": gradeLevel, "unit": unit, "lesson_title": lessonTitle]
+        payload["content"] = toDict(content)
+        jsonBody(&request, payload)
+        return try await send(request)
+    }
+
+    func lessonPreps() async throws -> [LessonPrepSummary] {
+        struct Response: Decodable { let preparations: [LessonPrepSummary] }
+        let result: Response = try await send(authorizedRequest("/api/lesson-prep"))
+        return result.preparations
+    }
+
+    func lessonPrepDetail(id: String) async throws -> LessonPrepDetail {
+        try await send(authorizedRequest("/api/lesson-prep/\(id)"))
+    }
+
+    func deleteLessonPrep(id: String) async throws {
+        try await sendVoid(authorizedRequest("/api/lesson-prep/\(id)", method: "DELETE"))
+    }
+
+    // ---- نشاط إثرائي (معلم - بدون حفظ) ----
+
+    func generateEnrichment(subject: String, gradeLevel: String, topic: String, lang: String) async throws -> EnrichmentContent {
+        var request = authorizedRequest("/api/enrichment/generate", method: "POST")
+        jsonBody(&request, ["subject": subject, "grade_level": gradeLevel, "topic": topic, "lang": lang])
+        let result: ContentRawResponse = try await send(request)
+        return try AiJSON.decode(result.contentRaw, as: EnrichmentContent.self)
+    }
+
+    // ---- محلّل نتائج الطلاب (معلم - بدون حفظ) ----
+
+    func generateResultsAnalysis(rawResults: String, lang: String) async throws -> ResultsAnalysisContent {
+        var request = authorizedRequest("/api/results-analysis/generate", method: "POST")
+        jsonBody(&request, ["raw_results": rawResults, "lang": lang])
+        let result: ContentRawResponse = try await send(request)
+        return try AiJSON.decode(result.contentRaw, as: ResultsAnalysisContent.self)
+    }
+
+    // ---- مساعد الواجب الذكي (طالب - ما فيه PATCH بالباك إند) ----
+
+    func generateHomeworkHelp(subject: String, gradeLevel: String, topic: String, lang: String) async throws -> HomeworkHelpContent {
+        var request = authorizedRequest("/api/homework-help/generate", method: "POST")
+        jsonBody(&request, ["subject": subject, "grade_level": gradeLevel, "topic": topic, "lang": lang])
+        let result: ContentRawResponse = try await send(request)
+        return try AiJSON.decode(result.contentRaw, as: HomeworkHelpContent.self)
+    }
+
+    func saveHomeworkHelp(subject: String, gradeLevel: String, topic: String, content: HomeworkHelpContent) async throws -> HomeworkHelpDetail {
+        var request = authorizedRequest("/api/homework-help", method: "POST")
+        var payload: [String: Any] = ["subject": subject, "grade_level": gradeLevel, "topic": topic]
+        payload["content"] = toDict(content)
+        jsonBody(&request, payload)
+        return try await send(request)
+    }
+
+    func homeworkHelpSessions() async throws -> [HomeworkHelpSummary] {
+        struct Response: Decodable { let sessions: [HomeworkHelpSummary] }
+        let result: Response = try await send(authorizedRequest("/api/homework-help"))
+        return result.sessions
+    }
+
+    func homeworkHelpDetail(id: String) async throws -> HomeworkHelpDetail {
+        try await send(authorizedRequest("/api/homework-help/\(id)"))
+    }
+
+    func deleteHomeworkHelp(id: String) async throws {
+        try await sendVoid(authorizedRequest("/api/homework-help/\(id)", method: "DELETE"))
+    }
+
+    // ---- خطة مذاكرة ذكية (طالب - ما فيه PATCH بالباك إند) ----
+
+    func generateStudyPlan(subjects: String, examDate: String?, hoursPerDay: Double?, lang: String) async throws -> StudyPlanContent {
+        var request = authorizedRequest("/api/study-plan/generate", method: "POST")
+        var payload: [String: Any] = ["subjects": subjects, "lang": lang]
+        payload["exam_date"] = examDate ?? NSNull()
+        payload["hours_per_day"] = hoursPerDay ?? NSNull()
+        jsonBody(&request, payload)
+        let result: ContentRawResponse = try await send(request)
+        return try AiJSON.decode(result.contentRaw, as: StudyPlanContent.self)
+    }
+
+    func saveStudyPlan(subjects: String, examDate: String?, hoursPerDay: Double?, content: StudyPlanContent) async throws -> StudyPlanDetail {
+        var request = authorizedRequest("/api/study-plan", method: "POST")
+        var payload: [String: Any] = ["subjects": subjects]
+        payload["exam_date"] = examDate ?? NSNull()
+        payload["hours_per_day"] = hoursPerDay ?? NSNull()
+        payload["content"] = toDict(content)
+        jsonBody(&request, payload)
+        return try await send(request)
+    }
+
+    func studyPlans() async throws -> [StudyPlanSummary] {
+        struct Response: Decodable { let plans: [StudyPlanSummary] }
+        let result: Response = try await send(authorizedRequest("/api/study-plan"))
+        return result.plans
+    }
+
+    func studyPlanDetail(id: String) async throws -> StudyPlanDetail {
+        try await send(authorizedRequest("/api/study-plan/\(id)"))
+    }
+
+    func deleteStudyPlan(id: String) async throws {
+        try await sendVoid(authorizedRequest("/api/study-plan/\(id)", method: "DELETE"))
+    }
 }

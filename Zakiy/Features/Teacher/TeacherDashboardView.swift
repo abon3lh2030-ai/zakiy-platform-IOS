@@ -74,6 +74,11 @@ struct TeacherDashboardView: View {
                 NavigationLink { QuizzesListView() } label: {
                     DashboardMenuRow(icon: "list.bullet.clipboard.fill", tint: .teal, title: Loc.t("quizzes"))
                 }
+                // مدرستي: اختصار الموقع الرسمي + أدوات ذكيّ المستقلة - بدون
+                // قيد دور، نفس سبب دمج المكتبة/الواجبات هنا
+                NavigationLink { MadrasatiHubView() } label: {
+                    DashboardMenuRow(icon: "graduationcap.fill", tint: .brown, title: Loc.t("nav_madrasati"))
+                }
             }
         }
         .scrollContentBackground(.hidden)

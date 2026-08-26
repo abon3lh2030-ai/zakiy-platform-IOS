@@ -45,6 +45,14 @@ struct AdminDashboardView: View {
                 }
             }
 
+            // مدرستي: اختصار الموقع الرسمي + أدوات ذكيّ المستقلة - بدون قيد
+            // دور، متاحة حتى لحساب الأدمن العام
+            Section {
+                NavigationLink { MadrasatiHubView() } label: {
+                    DashboardMenuRow(icon: "graduationcap.fill", tint: .brown, title: Loc.t("nav_madrasati"))
+                }
+            }
+
             Section(Loc.t("admin_schools_list_heading")) {
                 if isLoading {
                     ProgressView()

@@ -40,6 +40,11 @@ struct SchoolDashboardView: View {
                 NavigationLink { LibraryListView() } label: {
                     DashboardMenuRow(icon: "books.vertical.fill", tint: .indigo, title: Loc.t("tab_library"))
                 }
+                // مدرستي: اختصار الموقع الرسمي + أدوات ذكيّ المستقلة - بدون
+                // قيد دور، نفس سبب دمج المكتبة هنا
+                NavigationLink { MadrasatiHubView() } label: {
+                    DashboardMenuRow(icon: "graduationcap.fill", tint: .brown, title: Loc.t("nav_madrasati"))
+                }
             }
         }
         .scrollContentBackground(.hidden)

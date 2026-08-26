@@ -42,6 +42,11 @@ struct SettingsView: View {
                 NavigationLink { AIConversationsListView() } label: {
                     SettingsRow(icon: "sparkles", tint: .teal, title: Loc.t("ai_assistant"), subtitle: Loc.t("ai_assistant_subtitle"))
                 }
+                // مدرستي: اختصار الموقع الرسمي + أدوات ذكيّ المستقلة - متاحة
+                // لأي حساب مسجّل دخول بدون قيد دور (نفس زر السايدبار بالموقع)
+                NavigationLink { MadrasatiHubView() } label: {
+                    SettingsRow(icon: "graduationcap.fill", tint: .brown, title: Loc.t("nav_madrasati"), subtitle: Loc.t("madrasati_nav_subtitle"))
+                }
                 // حساب مؤسسي (طالب/معلم/إدارة مدرسة...) وصوله محكوم بباقة مدرسته
                 // لا باشتراك فردي - ما نعرض له زر الاشتراك إطلاقًا
                 if auth.role == nil {
