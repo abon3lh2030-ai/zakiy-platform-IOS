@@ -47,6 +47,15 @@ struct SettingsView: View {
                 NavigationLink { MadrasatiHubView() } label: {
                     SettingsRow(icon: "graduationcap.fill", tint: .brown, title: Loc.t("nav_madrasati"), subtitle: Loc.t("madrasati_nav_subtitle"))
                 }
+                // معمل الروبوتات ومختبر العلوم - متاحان لأي حساب مسجّل دخول
+                // بدون أي قيد دور، بالضبط زي roboticsLabBtn/scienceLabBtn
+                // بسايدبار الموقع (نفس مبدأ AI Assistant/Madrasati فوق)
+                NavigationLink { RoboticsLabView() } label: {
+                    SettingsRow(icon: "cpu.fill", tint: .cyan, title: Loc.t("nav_robotics_lab"), subtitle: Loc.t("robotics_lab_nav_subtitle"))
+                }
+                NavigationLink { ScienceLabHubView() } label: {
+                    SettingsRow(icon: "testtube.2", tint: .green, title: Loc.t("nav_science_lab"), subtitle: Loc.t("science_lab_nav_subtitle"))
+                }
                 // حساب مؤسسي (طالب/معلم/إدارة مدرسة...) وصوله محكوم بباقة مدرسته
                 // لا باشتراك فردي - ما نعرض له زر الاشتراك إطلاقًا
                 if auth.role == nil {

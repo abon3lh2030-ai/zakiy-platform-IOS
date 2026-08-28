@@ -52,7 +52,7 @@ struct SchoolBulkAddView: View {
                             Text("\(student.username) — \(student.password)").font(.caption.monospaced())
                         }
                     }
-                    Button(Loc.t("btn_export_csv")) {
+                    Button(Loc.t("btn_export_share_csv")) {
                         shareURL = CSVExporter.makeStudentsCSV(result)
                         showShareSheet = shareURL != nil
                     }

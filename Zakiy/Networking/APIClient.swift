@@ -249,6 +249,30 @@ final class APIClient {
         return (result.reply, result.title)
     }
 
+    // ---------- مختبر العلوم: مساعد ذكيّ مستمر طول الجلسة + تلخيص نهائي
+    // (متاح لأي حساب مسجّل دخول، بدون قيد دور - راجع science_lab_chat/
+    // science_lab_summary بالباك إند) ----------
+    func scienceLabChat(message: String, lang: String, context: String?, interactionId: String?) async throws -> (reply: String, interactionId: String) {
+        var request = authorizedRequest("/api/science-lab/chat", method: "POST")
+        var payload: [String: Any] = ["message": message, "lang": lang]
+        if let context, !context.isEmpty { payload["context"] = context }
+        if let interactionId { payload["interaction_id"] = interactionId }
+        jsonBody(&request, payload)
+        struct Response: Decodable { let reply: String; let interactionId: String
+            enum CodingKeys: String, CodingKey { case reply; case interactionId = "interaction_id" }
+        }
+        let result: Response = try await send(request)
+        return (result.reply, result.interactionId)
+    }
+
+    func scienceLabSummary(log: [String], lang: String) async throws -> String {
+        var request = authorizedRequest("/api/science-lab/summary", method: "POST")
+        jsonBody(&request, ["log": log, "lang": lang])
+        struct Response: Decodable { let summary: String }
+        let result: Response = try await send(request)
+        return result.summary
+    }
+
     func syncProfile(username: String) async throws {
         var request = authorizedRequest("/api/profile/sync", method: "POST")
         jsonBody(&request, ["username": username])
