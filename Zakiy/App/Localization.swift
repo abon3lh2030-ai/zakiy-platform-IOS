@@ -625,6 +625,7 @@ enum Loc {
         "err_broadcast_body_required": "لازم تكتب نص الرسالة",
         "broadcast_sent_msg": "✅ وصلت لـ %d حساب",
         "confirm_delete_class": "متأكد تبي تحذف هذا الفصل؟",
+        "confirm_delete_schedule_entry": "متأكد تبي تحذف هذي الحصة من الجدول؟",
         "confirm_delete_account": "متأكد تبي تحذف هذا الحساب؟ ما يرجع بعدها",
         "btn_delete": "حذف",
 
@@ -1438,6 +1439,7 @@ enum Loc {
         "err_broadcast_body_required": "Message text is required",
         "broadcast_sent_msg": "✅ Sent to %d account(s)",
         "confirm_delete_class": "Delete this class?",
+        "confirm_delete_schedule_entry": "Delete this schedule slot?",
         "confirm_delete_account": "Delete this account? This can't be undone",
         "btn_delete": "Delete",
 

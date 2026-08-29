@@ -52,7 +52,9 @@ struct QuizCreateView: View {
 
                 Section {
                     TextField(Loc.t("quiz_subject_placeholder"), text: $subject)
+                        .accessibilityIdentifier("quiz_create_subject_field")
                     TextField(Loc.t("quiz_title_placeholder"), text: $title)
+                        .accessibilityIdentifier("quiz_create_title_field")
                     if effectivePlatform == "zakiy" {
                         Stepper(Loc.t("quiz_time_limit_stepper_label", timeLimitMinutes), value: $timeLimitMinutes, in: 1...300)
                     }
@@ -75,6 +77,7 @@ struct QuizCreateView: View {
                         Button(Loc.t("btn_add_question")) {
                             questions.append(QuizQuestionDraft())
                         }
+                        .accessibilityIdentifier("quiz_create_add_question_button")
                     }
                 }
 
@@ -91,6 +94,7 @@ struct QuizCreateView: View {
                     }
                     .buttonStyle(.appPrimary)
                     .disabled(isSaving || subject.isEmpty || title.isEmpty || (!isEditing && selectedClassId == nil))
+                    .accessibilityIdentifier("quiz_create_submit_button")
                 }
             }
             .navigationTitle(isEditing ? Loc.t("quiz_edit_heading") : Loc.t("quiz_new_heading"))
@@ -226,6 +230,7 @@ struct QuestionEditorCard: View {
                     Text(Loc.t("quiz_type_essay")).tag("essay")
                 }
                 .pickerStyle(.menu)
+                .accessibilityIdentifier("question_editor_type_picker")
                 Spacer()
                 Button(role: .destructive) { onRemove() } label: {
                     Image(systemName: "trash")
@@ -234,6 +239,7 @@ struct QuestionEditorCard: View {
 
             TextField(Loc.t("quiz_question_text_placeholder"), text: $question.text, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
+                .accessibilityIdentifier("question_editor_text_field")
 
             switch question.questionType {
             case "mcq": mcqEditor
@@ -293,11 +299,13 @@ struct QuestionEditorCard: View {
             } label: {
                 Label(Loc.t("quiz_true_label"), systemImage: question.correctBool == true ? "checkmark.circle.fill" : "circle")
             }
+            .accessibilityIdentifier("question_editor_true_button")
             Button {
                 question.correctBool = (question.correctBool == false) ? nil : false
             } label: {
                 Label(Loc.t("quiz_false_label"), systemImage: question.correctBool == false ? "checkmark.circle.fill" : "circle")
             }
+            .accessibilityIdentifier("question_editor_false_button")
         }
         .buttonStyle(.plain)
         .font(.subheadline)

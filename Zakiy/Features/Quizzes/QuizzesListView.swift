@@ -31,6 +31,7 @@ struct QuizzesListView: View {
                         QuizRow(quiz: quiz, isTeacher: isTeacher)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("quiz_row_\(quiz.id)")
                 }
                 .scrollContentBackground(.hidden)
             }
@@ -41,6 +42,7 @@ struct QuizzesListView: View {
             if isTeacher {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { showCreateSheet = true } label: { Image(systemName: "plus") }
+                        .accessibilityIdentifier("quizzes_create_button")
                 }
             }
         }

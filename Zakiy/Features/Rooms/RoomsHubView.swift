@@ -52,6 +52,7 @@ struct RoomsHubView: View {
                         StudyOptionCard(icon: "person.3.fill", title: Loc.t("group_room"), subtitle: Loc.t("group_room_subtitle"))
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("rooms_hub_group_room_row")
 
                     NavigationLink {
                         RoomLobbyView(roomType: "classroom")
@@ -59,6 +60,7 @@ struct RoomsHubView: View {
                         StudyOptionCard(icon: "person.crop.rectangle.stack.fill", title: Loc.t("room_type_classroom"), subtitle: Loc.t("live_lesson_subtitle"))
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("rooms_hub_live_lesson_row")
                 }
             }
             .padding()

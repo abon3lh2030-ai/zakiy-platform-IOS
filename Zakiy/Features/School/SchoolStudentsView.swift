@@ -10,6 +10,8 @@ struct SchoolStudentsView: View {
     @State private var resetResult: AccountResetCredentials?
     @State private var resetError: String?
     @State private var studentPendingReset: SchoolStudent?
+    @State private var deleteError: String?
+    @State private var studentPendingDelete: SchoolStudent?
 
     private var classNames: [String: String] {
         Dictionary(uniqueKeysWithValues: classes.map { ($0.id, $0.name) })
@@ -33,6 +35,10 @@ struct SchoolStudentsView: View {
                 if let resetError {
                     Text(resetError).font(.footnote).foregroundStyle(.red)
                 }
+                if let deleteError {
+                    Text(deleteError).font(.footnote).foregroundStyle(.red)
+                        .accessibilityIdentifier("school_students_delete_error")
+                }
             }
         }
         .task { await load() }
@@ -53,10 +59,14 @@ struct SchoolStudentsView: View {
                     studentPendingReset = student
                 }
                 .font(.caption)
+                // كان الحذف ينفّذ مباشرة بدون أي تأكيد (عكس زر إعادة تعيين
+                // كلمة السر بنفس الصف اللي عنده confirmationDialog) - حذف
+                // طالب فعلي بضغطة وحدة بالغلط خطر حقيقي، فأضفنا نفس نمط التأكيد.
                 Button(Loc.t("btn_delete"), role: .destructive) {
-                    Task { await deleteStudent(student) }
+                    studentPendingDelete = student
                 }
                 .font(.caption)
+                .accessibilityIdentifier("school_student_delete_button_\(student.id)")
             }
         }
         .padding(.vertical, 4)
@@ -69,6 +79,16 @@ struct SchoolStudentsView: View {
                 Task { await resetPassword(student) }
             }
             Button(Loc.t("cancel"), role: .cancel) { studentPendingReset = nil }
+        }
+        .confirmationDialog(
+            Loc.t("confirm_delete_account"),
+            isPresented: Binding(get: { studentPendingDelete?.id == student.id }, set: { if !$0 { studentPendingDelete = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button(Loc.t("btn_delete"), role: .destructive) {
+                Task { await deleteStudent(student) }
+            }
+            Button(Loc.t("cancel"), role: .cancel) { studentPendingDelete = nil }
         }
     }
 
@@ -92,7 +112,12 @@ struct SchoolStudentsView: View {
     }
 
     private func deleteStudent(_ student: SchoolStudent) async {
-        try? await APIClient.shared.schoolDeleteAccount(userId: student.userId)
-        await load()
+        deleteError = nil
+        do {
+            try await APIClient.shared.schoolDeleteAccount(userId: student.userId)
+            await load()
+        } catch {
+            deleteError = Loc.t("error_generic")
+        }
     }
 }

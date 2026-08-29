@@ -29,8 +29,11 @@ struct AssignmentCreateSheet: View {
                 }
                 Section {
                     TextField(Loc.t("assignment_subject_placeholder"), text: $subject)
+                        .accessibilityIdentifier("assignment_create_subject_field")
                     TextField(Loc.t("assignment_title_placeholder"), text: $title)
+                        .accessibilityIdentifier("assignment_create_title_field")
                     TextEditor(text: $content)
+                        .accessibilityIdentifier("assignment_create_content_field")
                         .frame(minHeight: 140)
                         .overlay(alignment: .topLeading) {
                             if content.isEmpty {
@@ -82,6 +85,7 @@ struct AssignmentCreateSheet: View {
                     }
                     .buttonStyle(.appPrimary)
                     .disabled(isSaving || selectedClassId == nil || subject.isEmpty || title.isEmpty)
+                    .accessibilityIdentifier("assignment_create_submit_button")
                 }
             }
             .navigationTitle(Loc.t("assignment_new_heading"))

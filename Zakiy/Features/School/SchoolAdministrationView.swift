@@ -19,6 +19,8 @@ struct SchoolAdministrationView: View {
     @State private var resetResult: AccountResetCredentials?
     @State private var resetError: String?
     @State private var staffPendingReset: AdminStaffSummary?
+    @State private var deleteError: String?
+    @State private var staffPendingDelete: AdminStaffSummary?
 
     private var canManage: Bool { auth.role == "school_admin" }
 
@@ -41,6 +43,7 @@ struct SchoolAdministrationView: View {
                         }
                     }
                     .disabled(isSaving || name.trimmingCharacters(in: .whitespaces).isEmpty || email.isEmpty)
+                    .accessibilityIdentifier("admin_staff_add_button")
 
                     if let formError {
                         Text(formError).font(.footnote).foregroundStyle(.red)
@@ -67,6 +70,10 @@ struct SchoolAdministrationView: View {
                 if let resetError {
                     Text(resetError).font(.footnote).foregroundStyle(.red)
                 }
+                if let deleteError {
+                    Text(deleteError).font(.footnote).foregroundStyle(.red)
+                        .accessibilityIdentifier("school_administration_delete_error")
+                }
             }
         }
         .scrollContentBackground(.hidden)
@@ -88,9 +95,10 @@ struct SchoolAdministrationView: View {
                 .font(.caption)
                 if canManage {
                     Button(Loc.t("btn_delete"), role: .destructive) {
-                        Task { await deleteStaff(member) }
+                        staffPendingDelete = member
                     }
                     .font(.caption)
+                    .accessibilityIdentifier("admin_staff_delete_button_\(member.id)")
                 }
             }
         }
@@ -104,6 +112,18 @@ struct SchoolAdministrationView: View {
                 Task { await resetPassword(member) }
             }
             Button(Loc.t("cancel"), role: .cancel) { staffPendingReset = nil }
+        }
+        // كان الحذف ينفّذ مباشرة بدون أي تأكيد - نفس التصليح المطبّق بشاشتي
+        // المعلمين والطلاب
+        .confirmationDialog(
+            Loc.t("confirm_delete_account"),
+            isPresented: Binding(get: { staffPendingDelete?.id == member.id }, set: { if !$0 { staffPendingDelete = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button(Loc.t("btn_delete"), role: .destructive) {
+                Task { await deleteStaff(member) }
+            }
+            Button(Loc.t("cancel"), role: .cancel) { staffPendingDelete = nil }
         }
     }
 
@@ -132,8 +152,13 @@ struct SchoolAdministrationView: View {
     }
 
     private func deleteStaff(_ member: AdminStaffSummary) async {
-        try? await APIClient.shared.schoolDeleteAccount(userId: member.userId)
-        await load()
+        deleteError = nil
+        do {
+            try await APIClient.shared.schoolDeleteAccount(userId: member.userId)
+            await load()
+        } catch {
+            deleteError = Loc.t("error_generic")
+        }
     }
 
     private func resetPassword(_ member: AdminStaffSummary) async {

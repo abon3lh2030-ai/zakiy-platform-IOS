@@ -41,6 +41,7 @@ struct TeacherDashboardView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(isStartingClass || selectedClassId == nil)
+                .accessibilityIdentifier("teacher_dash_start_live_class_button")
                 if let startError {
                     Text(startError).font(.footnote).foregroundStyle(.red)
                 }
@@ -50,40 +51,49 @@ struct TeacherDashboardView: View {
                 NavigationLink { TeacherRosterView(selectedClassId: $selectedClassId) } label: {
                     DashboardMenuRow(icon: "person.3.fill", tint: .blue, title: Loc.t("tab_roster"))
                 }
+                .accessibilityIdentifier("teacher_dash_roster_row")
                 NavigationLink { TeacherPerformanceView(selectedClassId: selectedClassId) } label: {
                     DashboardMenuRow(icon: "chart.bar.fill", tint: .purple, title: Loc.t("tab_performance"))
                 }
+                .accessibilityIdentifier("teacher_dash_performance_row")
                 NavigationLink { TeacherScheduleView() } label: {
                     DashboardMenuRow(icon: "calendar", tint: .orange, title: Loc.t("tab_schedule"))
                 }
+                .accessibilityIdentifier("teacher_dash_schedule_row")
                 NavigationLink { TeacherAttendanceView(selectedClassId: selectedClassId) } label: {
                     DashboardMenuRow(icon: "checklist", tint: .green, title: Loc.t("tab_attendance"))
                 }
+                .accessibilityIdentifier("teacher_dash_attendance_row")
                 // مكتبة المعلم الشخصية (يرفع ويحفظ كتبه/ملازمه) - نفس شاشة
                 // مكتبة الطلاب بالضبط، بس مدموجة هنا لأن حساب مؤسسي ما يوصل
                 // MainTabView العادي إطلاقًا (لوحته تحل محله بالكامل)
                 NavigationLink { LibraryListView() } label: {
                     DashboardMenuRow(icon: "books.vertical.fill", tint: .indigo, title: Loc.t("tab_library"))
                 }
+                .accessibilityIdentifier("teacher_dash_library_row")
                 // دفتر الواجبات - معلم/طالب بس، نفس سبب دمج المكتبة هنا
                 // (حساب مؤسسي ما يوصل MainTabView/SettingsView العادي)
                 NavigationLink { AssignmentsListView() } label: {
                     DashboardMenuRow(icon: "doc.text.fill", tint: .pink, title: Loc.t("assignments"))
                 }
+                .accessibilityIdentifier("teacher_dash_assignments_row")
                 // الاختبارات - معلم/طالب بس، نفس سبب دمج المكتبة/الواجبات هنا
                 NavigationLink { QuizzesListView() } label: {
                     DashboardMenuRow(icon: "list.bullet.clipboard.fill", tint: .teal, title: Loc.t("quizzes"))
                 }
+                .accessibilityIdentifier("teacher_dash_quizzes_row")
                 // كشف الدرجات - معلم بس (الباك إند require_role("teacher"))، نفس
                 // سبب دمج المكتبة/الواجبات/الاختبارات هنا
                 NavigationLink { GradesheetView() } label: {
                     DashboardMenuRow(icon: "chart.bar.doc.horizontal.fill", tint: .cyan, title: Loc.t("nav_gradesheet"))
                 }
+                .accessibilityIdentifier("teacher_dash_gradesheet_row")
                 // مدرستي: اختصار الموقع الرسمي + أدوات ذكيّ المستقلة - بدون
                 // قيد دور، نفس سبب دمج المكتبة/الواجبات هنا
                 NavigationLink { MadrasatiHubView() } label: {
                     DashboardMenuRow(icon: "graduationcap.fill", tint: .brown, title: Loc.t("nav_madrasati"))
                 }
+                .accessibilityIdentifier("teacher_dash_madrasati_row")
             }
         }
         .scrollContentBackground(.hidden)

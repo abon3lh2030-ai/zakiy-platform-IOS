@@ -78,9 +78,11 @@ struct SettingsView: View {
                     NavigationLink { AssignmentsListView() } label: {
                         SettingsRow(icon: "doc.text.fill", tint: .pink, title: Loc.t("assignments"), subtitle: Loc.t("assignments_subtitle"))
                     }
+                    .accessibilityIdentifier("settings_assignments_row")
                     NavigationLink { QuizzesListView() } label: {
                         SettingsRow(icon: "list.bullet.clipboard.fill", tint: .teal, title: Loc.t("quizzes"), subtitle: Loc.t("quizzes_subtitle"))
                     }
+                    .accessibilityIdentifier("settings_quizzes_row")
                 }
                 NavigationLink { FriendsListView() } label: {
                     SettingsRow(icon: "person.2.fill", tint: .blue, title: Loc.t("friends"), subtitle: Loc.t("friends_subtitle"))

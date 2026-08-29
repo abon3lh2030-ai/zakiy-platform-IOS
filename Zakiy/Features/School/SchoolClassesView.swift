@@ -111,6 +111,11 @@ struct ClassScheduleView: View {
     @State private var subject = ""
     @State private var isSaving = false
     @State private var errorMessage: String?
+    @State private var reassignError: String?
+    @State private var scheduleDeleteError: String?
+    @State private var classDeleteError: String?
+    @State private var confirmingDeleteClass = false
+    @State private var pendingScheduleDelete: ClassScheduleEntry?
 
     var body: some View {
         List {
@@ -123,9 +128,20 @@ struct ClassScheduleView: View {
                 }
                 .onChange(of: selectedTeacherId) {
                     Task {
-                        try? await APIClient.shared.schoolReassignClassTeacher(classId: schoolClass.id, teacherId: selectedTeacherId)
-                        onChanged()
+                        reassignError = nil
+                        do {
+                            try await APIClient.shared.schoolReassignClassTeacher(classId: schoolClass.id, teacherId: selectedTeacherId)
+                            onChanged()
+                        } catch {
+                            // كانت `try?` تبلع الفشل - البيكر يبقى على القيمة الجديدة
+                            // بالشاشة رغم إن التعيين ما انحفظ فعليًا بالسيرفر
+                            reassignError = Loc.t("error_generic")
+                        }
                     }
+                }
+                if let reassignError {
+                    Text(reassignError).font(.footnote).foregroundStyle(.red)
+                        .accessibilityIdentifier("class_schedule_reassign_error")
                 }
             }
 
@@ -170,22 +186,58 @@ struct ClassScheduleView: View {
                             }
                             Spacer()
                             Button(role: .destructive) {
-                                Task { await deleteSchedule(entry) }
+                                pendingScheduleDelete = entry
                             } label: {
                                 Image(systemName: "trash")
                             }
+                            .accessibilityIdentifier("class_schedule_delete_entry_\(entry.id)")
                         }
                     }
+                }
+                if let scheduleDeleteError {
+                    Text(scheduleDeleteError).font(.footnote).foregroundStyle(.red)
+                        .accessibilityIdentifier("class_schedule_delete_entry_error")
                 }
             }
 
             Section {
                 Button(Loc.t("btn_delete"), role: .destructive) {
-                    Task { await deleteClass() }
+                    confirmingDeleteClass = true
+                }
+                .accessibilityIdentifier("class_schedule_delete_class_button")
+                if let classDeleteError {
+                    Text(classDeleteError).font(.footnote).foregroundStyle(.red)
+                        .accessibilityIdentifier("class_schedule_delete_class_error")
                 }
             }
         }
         .navigationTitle(schoolClass.name)
+        // كانت أزرار حذف حصة/فصل تنفّذ مباشرة بدون أي تأكيد، وحذف الفصل كان
+        // يقفل الشاشة (dismiss) حتى لو فشل الحذف فعليًا بالسيرفر (try? يبلع
+        // الخطأ) - يوهم المستخدم إن الحذف نجح. صلّحنا الاثنين: تأكيد قبل
+        // التنفيذ + رسالة خطأ + قفل الشاشة فقط لو نجح فعليًا.
+        .confirmationDialog(
+            Loc.t("confirm_delete_class"),
+            isPresented: $confirmingDeleteClass,
+            titleVisibility: .visible
+        ) {
+            Button(Loc.t("btn_delete"), role: .destructive) {
+                Task { await deleteClass() }
+            }
+            Button(Loc.t("cancel"), role: .cancel) {}
+        }
+        .confirmationDialog(
+            Loc.t("confirm_delete_schedule_entry"),
+            isPresented: Binding(get: { pendingScheduleDelete != nil }, set: { if !$0 { pendingScheduleDelete = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button(Loc.t("btn_delete"), role: .destructive) {
+                if let entry = pendingScheduleDelete {
+                    Task { await deleteSchedule(entry) }
+                }
+            }
+            Button(Loc.t("cancel"), role: .cancel) { pendingScheduleDelete = nil }
+        }
         .task {
             selectedTeacherId = schoolClass.teacherId
             await load()
@@ -218,13 +270,25 @@ struct ClassScheduleView: View {
     }
 
     private func deleteSchedule(_ entry: ClassScheduleEntry) async {
-        try? await APIClient.shared.schoolDeleteSchedule(id: entry.id)
-        await load()
+        scheduleDeleteError = nil
+        do {
+            try await APIClient.shared.schoolDeleteSchedule(id: entry.id)
+            await load()
+        } catch {
+            scheduleDeleteError = Loc.t("error_generic")
+        }
     }
 
     private func deleteClass() async {
-        try? await APIClient.shared.schoolDeleteClass(classId: schoolClass.id)
-        onChanged()
-        dismiss()
+        classDeleteError = nil
+        do {
+            try await APIClient.shared.schoolDeleteClass(classId: schoolClass.id)
+            onChanged()
+            // نقفل الشاشة فقط لو الحذف نجح فعليًا - كانت `try?` تبلع الفشل
+            // وتقفل الشاشة برضو، فيوهم المستخدم إن الفصل انحذف رغم بقائه
+            dismiss()
+        } catch {
+            classDeleteError = Loc.t("error_generic")
+        }
     }
 }

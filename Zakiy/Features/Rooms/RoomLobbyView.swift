@@ -15,6 +15,7 @@ struct RoomLobbyView: View {
     @State private var errorMessage: String?
     @State private var showPaywall = false
     @State private var showScanner = false
+    @State private var showLogin = false
     @State private var destination: RoomDestination?
 
     private struct RoomDestination: Identifiable, Hashable {
@@ -45,14 +46,20 @@ struct RoomLobbyView: View {
         VStack(spacing: 16) {
             Image(systemName: "lock.fill").font(.largeTitle).foregroundStyle(.secondary)
             Text(Loc.t("login_required_for_rooms")).multilineTextAlignment(.center).foregroundStyle(.secondary)
-            NavigationLink(Loc.t("login")) { LoginView() }
+            Button(Loc.t("login")) { showLogin = true }
                 .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("room_lobby_login_button")
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.appBackground)
         .navigationTitle(roomType == "classroom" ? Loc.t("room_type_classroom") : Loc.t("group_room"))
         .navigationBarTitleDisplayMode(.inline)
+        // كانت NavigationLink تدفع LoginView (اللي هو نفسه NavigationStack)
+        // فوق NavigationStack الحالي - تعشيش غير صحيح يسبب خلل زر الرجوع
+        // (نفس نمط الخلل الموثّق بمشروعنا). الصح: تقديمها كـ sheet مثل
+        // WelcomeView بالضبط، عشان تدير NavigationStack مستقل خاص فيها.
+        .sheet(isPresented: $showLogin) { LoginView() }
     }
 
     private var roomLobbyContent: some View {

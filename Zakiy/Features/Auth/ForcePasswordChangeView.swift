@@ -26,8 +26,10 @@ struct ForcePasswordChangeView: View {
                 Section {
                     SecureField(Loc.t("new_password"), text: $newPassword)
                         .textContentType(.newPassword)
+                        .accessibilityIdentifier("force_pw_new_password_field")
                     SecureField(Loc.t("confirm_password"), text: $confirmPassword)
                         .textContentType(.newPassword)
+                        .accessibilityIdentifier("force_pw_confirm_password_field")
                 }
                 if newPassword.count > 0, newPassword.count < 6 {
                     Text(Loc.t("err_password_min")).font(.footnote).foregroundStyle(.red)
@@ -36,6 +38,7 @@ struct ForcePasswordChangeView: View {
                 }
                 if let errorMessage {
                     Text(errorMessage).font(.footnote).foregroundStyle(.red)
+                        .accessibilityIdentifier("force_pw_error_message")
                 }
                 Section {
                     Button {
@@ -48,6 +51,7 @@ struct ForcePasswordChangeView: View {
                         }
                     }
                     .disabled(isSaving || !isValid)
+                    .accessibilityIdentifier("force_pw_save_button")
                 }
             }
             .navigationTitle(Loc.t("force_pw_heading"))

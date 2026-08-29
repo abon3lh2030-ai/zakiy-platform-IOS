@@ -17,6 +17,8 @@ struct SchoolTeachersView: View {
     @State private var resetResult: AccountResetCredentials?
     @State private var resetError: String?
     @State private var teacherPendingReset: TeacherSummary?
+    @State private var deleteError: String?
+    @State private var teacherPendingDelete: TeacherSummary?
 
     var body: some View {
         List {
@@ -60,6 +62,10 @@ struct SchoolTeachersView: View {
                 }
                 if let resetError {
                     Text(resetError).font(.footnote).foregroundStyle(.red)
+                }
+                if let deleteError {
+                    Text(deleteError).font(.footnote).foregroundStyle(.red)
+                        .accessibilityIdentifier("school_teachers_delete_error")
                 }
             }
 
@@ -105,9 +111,10 @@ struct SchoolTeachersView: View {
                 }
                 .font(.caption)
                 Button(Loc.t("btn_delete"), role: .destructive) {
-                    Task { await deleteTeacher(teacher) }
+                    teacherPendingDelete = teacher
                 }
                 .font(.caption)
+                .accessibilityIdentifier("school_teacher_delete_button_\(teacher.id)")
             }
         }
         .padding(.vertical, 4)
@@ -120,6 +127,17 @@ struct SchoolTeachersView: View {
                 Task { await resetPassword(teacher) }
             }
             Button(Loc.t("cancel"), role: .cancel) { teacherPendingReset = nil }
+        }
+        // كان الحذف ينفّذ مباشرة بدون أي تأكيد - نفس التصليح المطبّق بشاشة الطلاب
+        .confirmationDialog(
+            Loc.t("confirm_delete_account"),
+            isPresented: Binding(get: { teacherPendingDelete?.id == teacher.id }, set: { if !$0 { teacherPendingDelete = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button(Loc.t("btn_delete"), role: .destructive) {
+                Task { await deleteTeacher(teacher) }
+            }
+            Button(Loc.t("cancel"), role: .cancel) { teacherPendingDelete = nil }
         }
     }
 
@@ -148,8 +166,15 @@ struct SchoolTeachersView: View {
     }
 
     private func deleteTeacher(_ teacher: TeacherSummary) async {
-        try? await APIClient.shared.schoolDeleteAccount(userId: teacher.userId)
-        await load()
+        deleteError = nil
+        do {
+            try await APIClient.shared.schoolDeleteAccount(userId: teacher.userId)
+            await load()
+        } catch {
+            // كانت `try?` تبلع الفشل بصمت - الشاشة تعيد تحميل القائمة كأن الحذف
+            // نجح رغم فشله فعليًا بالسيرفر (المعلم يبقى بالقائمة بدون أي تنبيه)
+            deleteError = Loc.t("error_generic")
+        }
     }
 
     private func resetPassword(_ teacher: TeacherSummary) async {

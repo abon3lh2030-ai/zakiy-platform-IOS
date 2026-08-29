@@ -70,13 +70,26 @@ private struct TeacherSubmissionsSection: View {
     let assignment: AssignmentDetail
     var onLinkUpdated: () async -> Void
 
+    @State private var linkError: String?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if assignment.platform == "madrasati" {
                 PlatformLinkEditor(currentLink: assignment.externalLink) { newLink in
                     let trimmed = newLink.trimmingCharacters(in: .whitespacesAndNewlines)
-                    try? await APIClient.shared.updateAssignmentLink(id: assignmentId, externalLink: trimmed.isEmpty ? nil : trimmed)
-                    await onLinkUpdated()
+                    linkError = nil
+                    do {
+                        try await APIClient.shared.updateAssignmentLink(id: assignmentId, externalLink: trimmed.isEmpty ? nil : trimmed)
+                        await onLinkUpdated()
+                    } catch {
+                        // كانت `try?` تبلع الفشل - المعلم يشوف الحفظ يخلص عادي
+                        // بدون أي إشارة إن الرابط ما انحفظ فعليًا بالسيرفر
+                        linkError = Loc.t("error_generic")
+                    }
+                }
+                if let linkError {
+                    Text(linkError).font(.caption).foregroundStyle(.red)
+                        .accessibilityIdentifier("assignment_link_error")
                 }
             } else {
                 Text(Loc.t("assignment_students_heading")).font(.headline)
@@ -107,6 +120,7 @@ private struct StudentSubmissionRow: View {
     @State private var gradeText: String
     @State private var isSaving = false
     @State private var isExpanded = false
+    @State private var gradeError: String?
 
     init(assignmentId: String, submissionType: String, questions: [QuizQuestionFull], student: AssignmentStudentStatus) {
         self.assignmentId = assignmentId
@@ -183,13 +197,21 @@ private struct StudentSubmissionRow: View {
     }
 
     private var gradeField: some View {
-        HStack {
-            TextField(Loc.t("assignment_grade_label"), text: $gradeText)
-                .textFieldStyle(.roundedBorder)
-                .frame(width: 90)
-            Button(Loc.t("btn_save_grade")) { Task { await saveGrade() } }
-                .font(.caption)
-                .disabled(isSaving)
+        VStack(alignment: .trailing, spacing: 2) {
+            HStack {
+                TextField(Loc.t("assignment_grade_label"), text: $gradeText)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 90)
+                    .accessibilityIdentifier("assignment_grade_field_\(student.userId)")
+                Button(Loc.t("btn_save_grade")) { Task { await saveGrade() } }
+                    .font(.caption)
+                    .disabled(isSaving)
+                    .accessibilityIdentifier("assignment_save_grade_button_\(student.userId)")
+            }
+            if let gradeError {
+                Text(gradeError).font(.caption2).foregroundStyle(.red)
+                    .accessibilityIdentifier("assignment_grade_error_\(student.userId)")
+            }
         }
     }
 
@@ -210,7 +232,14 @@ private struct StudentSubmissionRow: View {
 
     private func saveGrade() async {
         isSaving = true
-        try? await APIClient.shared.gradeAssignmentSubmission(assignmentId: assignmentId, studentId: student.userId, grade: gradeText)
+        gradeError = nil
+        do {
+            try await APIClient.shared.gradeAssignmentSubmission(assignmentId: assignmentId, studentId: student.userId, grade: gradeText)
+        } catch {
+            // كانت `try?` تبلع الفشل بصمت - المعلم يشوف الزر يرجع عادي بدون
+            // أي إشارة إن الدرجة ما انحفظت فعليًا بالسيرفر
+            gradeError = Loc.t("error_generic")
+        }
         isSaving = false
     }
 }

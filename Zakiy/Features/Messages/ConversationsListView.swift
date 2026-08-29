@@ -14,6 +14,7 @@ struct ConversationsListView: View {
                 TextField(Loc.t("ph_search_username"), text: $searchText)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .accessibilityIdentifier("conversations_search_field")
                     .onChange(of: searchText) { _, newValue in
                         searchTask?.cancel()
                         searchTask = Task {
@@ -29,6 +30,7 @@ struct ConversationsListView: View {
                         } label: {
                             Text(user.username)
                         }
+                        .accessibilityIdentifier("conversations_search_result_\(user.userId)")
                     }
                 } else if !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
                     Text(Loc.t("no_users_found")).foregroundStyle(.secondary)

@@ -28,8 +28,14 @@ struct QuizDetailView: View {
                         if detail.platform == "madrasati" {
                             PlatformLinkEditor(currentLink: detail.externalLink) { newLink in
                                 let trimmed = newLink.trimmingCharacters(in: .whitespacesAndNewlines)
-                                _ = try? await APIClient.shared.updateQuizLink(id: quizId, externalLink: trimmed.isEmpty ? nil : trimmed)
-                                await load()
+                                do {
+                                    _ = try await APIClient.shared.updateQuizLink(id: quizId, externalLink: trimmed.isEmpty ? nil : trimmed)
+                                    errorMessage = nil
+                                    await load()
+                                } catch {
+                                    // كانت `try?` تبلع الفشل - نفس خلل AssignmentDetailView
+                                    errorMessage = Loc.t("error_generic")
+                                }
                             }
                         }
 
@@ -107,6 +113,7 @@ struct QuizDetailView: View {
             }
             .buttonStyle(.appPrimary)
             .disabled(isPublishing)
+            .accessibilityIdentifier("quiz_publish_button")
             Button(Loc.t("delete"), role: .destructive) { showDeleteConfirm = true }
                 .buttonStyle(.bordered)
                 .disabled(isDeleting)
@@ -176,6 +183,7 @@ private struct QuizStudentRow: View {
     @State private var isExpanded = false
     @State private var gradeText: String
     @State private var isSaving = false
+    @State private var gradeError: String?
 
     init(quizId: String, questions: [QuizQuestionFull], student: QuizStudentStatus) {
         self.quizId = quizId
@@ -236,9 +244,15 @@ private struct QuizStudentRow: View {
                     TextField(Loc.t("assignment_grade_label"), text: $gradeText)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 90)
+                        .accessibilityIdentifier("quiz_grade_field_\(student.userId)")
                     Button(Loc.t("btn_save_grade")) { Task { await saveGrade() } }
                         .font(.caption)
                         .disabled(isSaving)
+                        .accessibilityIdentifier("quiz_save_grade_button_\(student.userId)")
+                }
+                if let gradeError {
+                    Text(gradeError).font(.caption2).foregroundStyle(.red)
+                        .accessibilityIdentifier("quiz_grade_error_\(student.userId)")
                 }
             }
         }
@@ -257,7 +271,12 @@ private struct QuizStudentRow: View {
 
     private func saveGrade() async {
         isSaving = true
-        try? await APIClient.shared.gradeQuizAttempt(quizId: quizId, studentId: student.userId, grade: gradeText)
+        gradeError = nil
+        do {
+            try await APIClient.shared.gradeQuizAttempt(quizId: quizId, studentId: student.userId, grade: gradeText)
+        } catch {
+            gradeError = Loc.t("error_generic")
+        }
         isSaving = false
     }
 }

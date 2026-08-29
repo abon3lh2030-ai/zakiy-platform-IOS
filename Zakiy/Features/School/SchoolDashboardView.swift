@@ -20,31 +20,39 @@ struct SchoolDashboardView: View {
                 NavigationLink { SchoolTeachersView() } label: {
                     DashboardMenuRow(icon: "person.crop.rectangle.stack.fill", tint: .blue, title: Loc.t("tab_teachers"))
                 }
+                .accessibilityIdentifier("school_dash_teachers_row")
                 NavigationLink { SchoolAdministrationView() } label: {
                     DashboardMenuRow(icon: "person.badge.key.fill", tint: .brown, title: Loc.t("admin_staff_heading"))
                 }
+                .accessibilityIdentifier("school_dash_administration_row")
                 NavigationLink { SchoolStudentsView() } label: {
                     DashboardMenuRow(icon: "person.3.fill", tint: .teal, title: Loc.t("tab_students"))
                 }
+                .accessibilityIdentifier("school_dash_students_row")
                 NavigationLink { SchoolClassesView() } label: {
                     DashboardMenuRow(icon: "tag.fill", tint: .orange, title: Loc.t("tab_classes"))
                 }
+                .accessibilityIdentifier("school_dash_classes_row")
                 NavigationLink { SchoolBulkAddView() } label: {
                     DashboardMenuRow(icon: "person.badge.plus.fill", tint: .green, title: Loc.t("tab_bulk_students"))
                 }
+                .accessibilityIdentifier("school_dash_bulkadd_row")
                 NavigationLink { SchoolAttendanceView() } label: {
                     DashboardMenuRow(icon: "checklist", tint: .purple, title: Loc.t("tab_attendance"))
                 }
+                .accessibilityIdentifier("school_dash_attendance_row")
                 // مكتبة مدير/إداري المدرسة الشخصية - نفس شاشة مكتبة الطلاب
                 // بالضبط، بس مدموجة هنا لأن حساب مؤسسي ما يوصل MainTabView إطلاقًا
                 NavigationLink { LibraryListView() } label: {
                     DashboardMenuRow(icon: "books.vertical.fill", tint: .indigo, title: Loc.t("tab_library"))
                 }
+                .accessibilityIdentifier("school_dash_library_row")
                 // مدرستي: اختصار الموقع الرسمي + أدوات ذكيّ المستقلة - بدون
                 // قيد دور، نفس سبب دمج المكتبة هنا
                 NavigationLink { MadrasatiHubView() } label: {
                     DashboardMenuRow(icon: "graduationcap.fill", tint: .brown, title: Loc.t("nav_madrasati"))
                 }
+                .accessibilityIdentifier("school_dash_madrasati_row")
             }
         }
         .scrollContentBackground(.hidden)

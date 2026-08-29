@@ -13,6 +13,7 @@ struct RoleDashboardToolbar: ToolbarContent {
             } label: {
                 Image(systemName: "sparkles")
             }
+            .accessibilityIdentifier("role_toolbar_ai_button")
         }
         ToolbarItem(placement: .topBarTrailing) {
             NavigationLink {
@@ -20,9 +21,11 @@ struct RoleDashboardToolbar: ToolbarContent {
             } label: {
                 Image(systemName: NotificationSocketManager.shared.unreadCount > 0 ? "message.badge.fill" : "message")
             }
+            .accessibilityIdentifier("role_toolbar_messages_button")
         }
         ToolbarItem(placement: .topBarTrailing) {
             Button(Loc.t("logout")) { Task { try? await auth.signOut() } }
+                .accessibilityIdentifier("role_toolbar_logout_button")
         }
     }
 }

@@ -7,6 +7,7 @@ struct ConversationThreadView: View {
     @Environment(SupabaseAuthManager.self) private var auth
     @State private var messages: [DirectMessage] = []
     @State private var input = ""
+    @State private var sendError: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,15 +27,22 @@ struct ConversationThreadView: View {
                 }
             }
             Divider()
+            if let sendError {
+                Text(sendError).font(.caption).foregroundStyle(.red)
+                    .accessibilityIdentifier("conversation_send_error")
+                    .padding(.horizontal)
+            }
             HStack {
                 TextField(Loc.t("type_a_message"), text: $input)
                     .textFieldStyle(.roundedBorder)
+                    .accessibilityIdentifier("conversation_input_field")
                 Button {
                     Task { await send() }
                 } label: {
                     Image(systemName: "paperplane.fill")
                 }
                 .disabled(input.trimmingCharacters(in: .whitespaces).isEmpty)
+                .accessibilityIdentifier("conversation_send_button")
             }
             .padding()
         }
@@ -66,8 +74,16 @@ struct ConversationThreadView: View {
     private func send() async {
         let text = input.trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty else { return }
-        input = ""
-        try? await APIClient.shared.sendMessage(recipientId: userId, body: text)
-        await load()
+        sendError = nil
+        do {
+            try await APIClient.shared.sendMessage(recipientId: userId, body: text)
+            // نصفّر الحقل بعد التأكد من نجاح الإرسال فقط - كانت `input = ""`
+            // تُنفَّذ قبل الإرسال أصلًا (مع `try?` يبلع الفشل)، فلو فشل الإرسال
+            // يضيع النص المكتوب نهائيًا بدون أي تنبيه للمستخدم
+            input = ""
+            await load()
+        } catch {
+            sendError = Loc.t("error_generic")
+        }
     }
 }

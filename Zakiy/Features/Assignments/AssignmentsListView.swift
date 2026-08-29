@@ -30,6 +30,7 @@ struct AssignmentsListView: View {
                         AssignmentRow(assignment: assignment, isTeacher: isTeacher)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("assignment_row_\(assignment.id)")
                 }
                 .scrollContentBackground(.hidden)
             }
@@ -40,6 +41,7 @@ struct AssignmentsListView: View {
             if isTeacher {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { showCreateSheet = true } label: { Image(systemName: "plus") }
+                        .accessibilityIdentifier("assignments_create_button")
                 }
             }
         }

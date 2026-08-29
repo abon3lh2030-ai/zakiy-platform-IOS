@@ -50,6 +50,19 @@ final class AppSettings {
     var layoutDirection: LayoutDirection { languageCode == "ar" ? .rightToLeft : .leftToRight }
 
     private init() {
+        // اختبارات الواجهة (XCUITest) تعتمد على نصوص أزرار إنجليزية ثابتة (زي
+        // "Settings"/"Not Now") - لغة المحاكي الفعلية طلعت غير ثابتة بين تشغيل
+        // وآخر (رصدناها فعليًا: تنقلب عربي أحيانًا حتى لو كانت إنجليزي بتشغيل
+        // سابق نفس الجلسة)، فنجبر الإنجليزي صراحة بهذا العلم بدل ما نعتمد على
+        // اكتشاف لغة الجهاز - العلم ما يُمرَّر أبدًا بتشغيل التطبيق العادي.
+        if ProcessInfo.processInfo.arguments.contains("-UITestForceEnglish") {
+            languageCode = "en"
+            Self.currentLanguageCode = "en"
+            appearanceMode = .system
+            isGuest = UserDefaults.standard.bool(forKey: "zakiy.isGuest")
+            guestName = UserDefaults.standard.string(forKey: "zakiy.guestName") ?? ""
+            return
+        }
         // Only fall back to the device's own language on first launch (no saved preference
         // yet) — once the user has explicitly picked ar/en from Settings, that choice always
         // wins over the phone's language.
