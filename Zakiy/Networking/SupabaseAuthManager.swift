@@ -23,7 +23,19 @@ final class SupabaseAuthManager {
     var didLoadRole = false
 
     private init() {
-        client = SupabaseClient(supabaseURL: APIConfig.supabaseURL, supabaseKey: APIConfig.supabaseAnonKey)
+        // اختبارات الواجهة (XCUITest) تمرّر هذا العلم عشان كل تشغيل يبدأ بحالة
+        // نظيفة (بدون جلسة محفوظة من تشغيل سابق على نفس المحاكي) - يستخدم
+        // تخزين بالذاكرة بدل الـ Keychain الحقيقي، ما يمس أي حساب مستخدم فعلي
+        // إطلاقًا (العلم ما يُمرَّر أبدًا بتشغيل التطبيق العادي).
+        if ProcessInfo.processInfo.arguments.contains("-UITestResetState") {
+            client = SupabaseClient(
+                supabaseURL: APIConfig.supabaseURL,
+                supabaseKey: APIConfig.supabaseAnonKey,
+                options: SupabaseClientOptions(auth: .init(storage: InMemoryAuthLocalStorage()))
+            )
+        } else {
+            client = SupabaseClient(supabaseURL: APIConfig.supabaseURL, supabaseKey: APIConfig.supabaseAnonKey)
+        }
         Task { await observeAuthState() }
     }
 
@@ -149,5 +161,28 @@ final class SupabaseAuthManager {
 
     func updatePassword(_ newPassword: String) async throws {
         _ = try await client.auth.update(user: UserAttributes(password: newPassword))
+    }
+}
+
+/// تخزين جلسة بالذاكرة فقط - يُستخدم حصرًا عند تشغيل اختبارات الواجهة
+/// (`-UITestResetState`) عشان كل تشغيل تطبيق جديد يبدأ بدون أي جلسة محفوظة
+/// من تشغيل سابق (الـ Keychain الحقيقي يبقى بمعزل تام، ما يُلمس إطلاقًا).
+private final class InMemoryAuthLocalStorage: AuthLocalStorage, @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: [String: Data] = [:]
+
+    func store(key: String, value: Data) throws {
+        lock.lock(); defer { lock.unlock() }
+        storage[key] = value
+    }
+
+    func retrieve(key: String) throws -> Data? {
+        lock.lock(); defer { lock.unlock() }
+        return storage[key]
+    }
+
+    func remove(key: String) throws {
+        lock.lock(); defer { lock.unlock() }
+        storage.removeValue(forKey: key)
     }
 }

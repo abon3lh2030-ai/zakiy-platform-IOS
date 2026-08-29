@@ -31,6 +31,7 @@ struct WelcomeView: View {
                     }
                     .buttonStyle(.appPrimary)
                     .controlSize(.large)
+                    .accessibilityIdentifier("welcome_signup_button")
 
                     Button {
                         showLogin = true
@@ -39,6 +40,7 @@ struct WelcomeView: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.large)
+                    .accessibilityIdentifier("welcome_login_button")
 
                     Button(Loc.t("continue_guest")) {
                         withAnimation { settings.isGuest = true }
@@ -46,6 +48,7 @@ struct WelcomeView: View {
                     .buttonStyle(.plain)
                     .foregroundStyle(.secondary)
                     .padding(.top, 4)
+                    .accessibilityIdentifier("welcome_continue_guest_button")
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 32)

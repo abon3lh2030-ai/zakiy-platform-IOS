@@ -17,15 +17,22 @@ struct SignUpView: View {
             Form {
                 Section {
                     TextField(Loc.t("username"), text: $username)
+                        .accessibilityIdentifier("signup_username_field")
                     TextField(Loc.t("email"), text: $email)
                         .textInputAutocapitalization(.never)
                         .keyboardType(.emailAddress)
+                        .accessibilityIdentifier("signup_email_field")
                     SecureField(Loc.t("password"), text: $password)
+                        .textContentType(.newPassword)
+                        .accessibilityIdentifier("signup_password_field")
                     TextField(Loc.t("education_level"), text: $educationLevel)
+                        .accessibilityIdentifier("signup_education_level_field")
                     TextField(Loc.t("proficiency_level"), text: $proficiencyLevel)
+                        .accessibilityIdentifier("signup_proficiency_level_field")
                 }
                 if let errorMessage {
                     Text(errorMessage).foregroundStyle(.red).font(.footnote)
+                        .accessibilityIdentifier("signup_error_message")
                 }
                 Section {
                     Button {
@@ -38,6 +45,7 @@ struct SignUpView: View {
                         }
                     }
                     .disabled(isLoading || email.isEmpty || password.isEmpty || username.isEmpty)
+                    .accessibilityIdentifier("signup_submit_button")
                 }
             }
             .navigationTitle(Loc.t("signup"))

@@ -17,9 +17,11 @@ struct SettingsView: View {
                     NavigationLink { ProfileView(userId: nil) } label: {
                         SettingsRow(icon: "person.text.rectangle.fill", tint: .purple, title: Loc.t("my_profile"), subtitle: Loc.t("my_profile_subtitle"))
                     }
+                    .accessibilityIdentifier("settings_my_profile_row")
                     NavigationLink { EditProfileView() } label: {
                         SettingsRow(icon: "person.crop.circle.fill", tint: .indigo, title: Loc.t("edit_profile"), subtitle: Loc.t("edit_profile_subtitle"))
                     }
+                    .accessibilityIdentifier("settings_edit_profile_row")
                 } else {
                     Text(settings.isGuest ? Loc.t("guest_mode_label") : Loc.t("not_logged_in_label"))
                         .foregroundStyle(.secondary)
@@ -28,11 +30,13 @@ struct SettingsView: View {
                         Text(Loc.t("login")).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.appPrimary)
+                    .accessibilityIdentifier("settings_login_button")
 
                     Button { showSignUp = true } label: {
                         Text(Loc.t("signup")).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
+                    .accessibilityIdentifier("settings_signup_button")
                 }
             }
 
@@ -42,26 +46,31 @@ struct SettingsView: View {
                 NavigationLink { AIConversationsListView() } label: {
                     SettingsRow(icon: "sparkles", tint: .teal, title: Loc.t("ai_assistant"), subtitle: Loc.t("ai_assistant_subtitle"))
                 }
+                .accessibilityIdentifier("settings_ai_assistant_row")
                 // مدرستي: اختصار الموقع الرسمي + أدوات ذكيّ المستقلة - متاحة
                 // لأي حساب مسجّل دخول بدون قيد دور (نفس زر السايدبار بالموقع)
                 NavigationLink { MadrasatiHubView() } label: {
                     SettingsRow(icon: "graduationcap.fill", tint: .brown, title: Loc.t("nav_madrasati"), subtitle: Loc.t("madrasati_nav_subtitle"))
                 }
+                .accessibilityIdentifier("settings_madrasati_row")
                 // معمل الروبوتات ومختبر العلوم - متاحان لأي حساب مسجّل دخول
                 // بدون أي قيد دور، بالضبط زي roboticsLabBtn/scienceLabBtn
                 // بسايدبار الموقع (نفس مبدأ AI Assistant/Madrasati فوق)
                 NavigationLink { RoboticsLabView() } label: {
                     SettingsRow(icon: "cpu.fill", tint: .cyan, title: Loc.t("nav_robotics_lab"), subtitle: Loc.t("robotics_lab_nav_subtitle"))
                 }
+                .accessibilityIdentifier("settings_robotics_lab_row")
                 NavigationLink { ScienceLabHubView() } label: {
                     SettingsRow(icon: "testtube.2", tint: .green, title: Loc.t("nav_science_lab"), subtitle: Loc.t("science_lab_nav_subtitle"))
                 }
+                .accessibilityIdentifier("settings_science_lab_row")
                 // حساب مؤسسي (طالب/معلم/إدارة مدرسة...) وصوله محكوم بباقة مدرسته
                 // لا باشتراك فردي - ما نعرض له زر الاشتراك إطلاقًا
                 if auth.role == nil {
                     NavigationLink { SubscriptionView() } label: {
                         SettingsRow(icon: "crown.fill", tint: .orange, title: Loc.t("subscription"), subtitle: Loc.t("subscription_subtitle"))
                     }
+                    .accessibilityIdentifier("settings_subscription_row")
                 }
                 // دفتر الواجبات/الاختبارات - طالب بس (المعلم يشوفهم من لوحته
                 // الخاصة TeacherDashboardView، ما يوصل هذي الشاشة إطلاقًا)
@@ -76,15 +85,18 @@ struct SettingsView: View {
                 NavigationLink { FriendsListView() } label: {
                     SettingsRow(icon: "person.2.fill", tint: .blue, title: Loc.t("friends"), subtitle: Loc.t("friends_subtitle"))
                 }
+                .accessibilityIdentifier("settings_friends_row")
                 NavigationLink { ArchiveListView() } label: {
                     SettingsRow(icon: "archivebox.fill", tint: .gray, title: Loc.t("archive"), subtitle: Loc.t("archive_subtitle"))
                 }
+                .accessibilityIdentifier("settings_archive_row")
                 // دفتر الملاحظات ميزة حساب فردي بس - نفس شرط الاشتراك أعلاه،
                 // أي حساب مؤسسي (role موجود) ما يشوفه إطلاقًا
                 if auth.role == nil {
                     NavigationLink { NotesListView() } label: {
                         SettingsRow(icon: "note.text", tint: .yellow, title: Loc.t("notes"), subtitle: Loc.t("notes_subtitle"))
                     }
+                    .accessibilityIdentifier("settings_notes_row")
                 }
             }
 
@@ -112,6 +124,7 @@ struct SettingsView: View {
                     } label: {
                         Text(Loc.t("logout")).frame(maxWidth: .infinity)
                     }
+                    .accessibilityIdentifier("settings_logout_button")
                 }
             }
         }

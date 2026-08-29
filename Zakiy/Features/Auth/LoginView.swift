@@ -18,10 +18,14 @@ struct LoginView: View {
                     TextField(Loc.t("email_or_username"), text: $identifier)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .accessibilityIdentifier("login_identifier_field")
                     SecureField(Loc.t("password"), text: $password)
+                        .textContentType(.password)
+                        .accessibilityIdentifier("login_password_field")
                 }
                 if let errorMessage {
                     Text(errorMessage).foregroundStyle(.red).font(.footnote)
+                        .accessibilityIdentifier("login_error_message")
                 }
                 Section {
                     Button {
@@ -34,6 +38,7 @@ struct LoginView: View {
                         }
                     }
                     .disabled(isLoading || identifier.isEmpty || password.isEmpty)
+                    .accessibilityIdentifier("login_submit_button")
                 }
             }
             .navigationTitle(Loc.t("login"))
