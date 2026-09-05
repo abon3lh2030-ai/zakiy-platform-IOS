@@ -20,8 +20,8 @@ struct ScienceLabHubView: View {
 
             switch tab {
             case .chemistry:
-                // الكيمياء والفيزياء افتراضيًا هي التبويب الأول بالموقع نفسه -
-                // ما نحتاج ننادي أي دالة تنقّل JS إضافية بعد ما تحمّل الصفحة
+                // المختبر الأصلي يفتح أولًا، وخيار «التعلم الذكي» (كيمياء أو
+                // فيزياء أو أحياء) يأتي من مصدر الويب نفسه لضمان تطابقه مع الموقع.
                 EmbeddedWebScreen(target: .scienceLab)
             case .biology:
                 BiologyExplorerView()

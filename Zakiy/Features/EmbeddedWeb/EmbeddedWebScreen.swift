@@ -79,7 +79,7 @@ private struct EmbeddedWebViewRepresentable: UIViewRepresentable {
 
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
-        webView.load(URLRequest(url: EmbeddedWebAuthBridge.baseURL))
+        webView.load(URLRequest(url: EmbeddedWebAuthBridge.baseURL, cachePolicy: .reloadIgnoringLocalCacheData))
         context.coordinator.lastLoadedToken = reloadToken
         return webView
     }
@@ -87,7 +87,7 @@ private struct EmbeddedWebViewRepresentable: UIViewRepresentable {
     func updateUIView(_ webView: WKWebView, context: Context) {
         guard context.coordinator.lastLoadedToken != reloadToken else { return }
         context.coordinator.lastLoadedToken = reloadToken
-        webView.load(URLRequest(url: EmbeddedWebAuthBridge.baseURL))
+        webView.load(URLRequest(url: EmbeddedWebAuthBridge.baseURL, cachePolicy: .reloadIgnoringLocalCacheData))
     }
 
     final class Coordinator: NSObject, WKNavigationDelegate {
