@@ -14,9 +14,35 @@ struct AdminDashboardView: View {
     @State private var credentialResult: GeneratedCredentials?
     @State private var actionError: String?
     @State private var schoolPendingDelete: School?
+    @State private var freeAccessEnabled = false
+    @State private var freeAccessActive = false
+    @State private var scheduleStart = false
+    @State private var scheduleEnd = false
+    @State private var freeAccessStart = Date()
+    @State private var freeAccessEnd = Date().addingTimeInterval(86_400)
+    @State private var isSavingFreeAccess = false
 
     var body: some View {
         List {
+            Section(Loc.t("admin_free_access_heading")) {
+                Toggle(Loc.t("admin_free_access_enabled"), isOn: $freeAccessEnabled)
+                Toggle(Loc.t("admin_free_access_schedule_start"), isOn: $scheduleStart)
+                if scheduleStart {
+                    DatePicker(Loc.t("admin_free_access_start"), selection: $freeAccessStart)
+                }
+                Toggle(Loc.t("admin_free_access_schedule_end"), isOn: $scheduleEnd)
+                if scheduleEnd {
+                    DatePicker(Loc.t("admin_free_access_end"), selection: $freeAccessEnd)
+                }
+                Text(freeAccessActive ? Loc.t("admin_free_access_active") : Loc.t("admin_free_access_inactive"))
+                    .font(.footnote.bold())
+                    .foregroundStyle(freeAccessActive ? .green : .secondary)
+                Button(Loc.t("admin_free_access_save")) {
+                    Task { await savePlatformAccess() }
+                }
+                .disabled(isSavingFreeAccess)
+            }
+
             Section(Loc.t("admin_add_school_heading")) {
                 TextField(Loc.t("ph_school_name"), text: $newSchoolName)
                 TextField(Loc.t("ph_school_admin_email"), text: $newSchoolAdminEmail)
@@ -130,8 +156,40 @@ struct AdminDashboardView: View {
 
     private func load() async {
         isLoading = true
-        schools = (try? await APIClient.shared.adminSchools()) ?? []
+        async let schoolsRequest = APIClient.shared.adminSchools()
+        async let accessRequest = APIClient.shared.adminPlatformAccess()
+        schools = (try? await schoolsRequest) ?? []
+        if let access = try? await accessRequest {
+            freeAccessEnabled = access.freeAccessEnabled ?? false
+            freeAccessActive = access.freeAccessActive
+            let formatter = ISO8601DateFormatter()
+            if let value = access.freeAccessStartsAt, let date = formatter.date(from: value) {
+                scheduleStart = true
+                freeAccessStart = date
+            } else { scheduleStart = false }
+            if let value = access.freeAccessEndsAt, let date = formatter.date(from: value) {
+                scheduleEnd = true
+                freeAccessEnd = date
+            } else { scheduleEnd = false }
+        }
         isLoading = false
+    }
+
+    private func savePlatformAccess() async {
+        isSavingFreeAccess = true
+        actionError = nil
+        do {
+            let access = try await APIClient.shared.adminUpdatePlatformAccess(
+                enabled: freeAccessEnabled,
+                startsAt: scheduleStart ? freeAccessStart : nil,
+                endsAt: scheduleEnd ? freeAccessEnd : nil
+            )
+            freeAccessActive = access.freeAccessActive
+            await UsageLimiter.shared.refreshPlatformAccess()
+        } catch {
+            actionError = error.localizedDescription
+        }
+        isSavingFreeAccess = false
     }
 
     private func createSchool() async {

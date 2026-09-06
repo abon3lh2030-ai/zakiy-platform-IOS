@@ -13,13 +13,13 @@ struct BiologyExplorerView: View {
     var body: some View {
         VStack(spacing: 0) {
             NavigationStack(path: $path) {
-                BioCategoryGridView(path: $path)
+                BioCategoryGridView(path: $path, session: session)
                     .navigationDestination(for: BioRoute.self) { route in
                         switch route {
                         case .animalGrid(let categoryId):
                             BioAnimalGridView(categoryId: categoryId, path: $path)
                         case .detail(let kind):
-                            BioAnimalDetailView(kind: kind)
+                            BioAnimalDetailView(kind: kind, session: session)
                         }
                     }
             }
@@ -46,7 +46,6 @@ struct BiologyExplorerView: View {
             .padding(12)
             .background(Color.appBackground)
         }
-        .environment(session)
         .sheet(isPresented: $showChat) {
             NavigationStack { ScienceLabChatPanel(session: session) }
         }

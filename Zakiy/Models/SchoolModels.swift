@@ -26,6 +26,20 @@ enum AccountRole: String {
     case admin, schoolAdmin = "school_admin", schoolAdministration = "school_administration", teacher, student
 }
 
+struct PlatformAccessState: Decodable {
+    let freeAccessEnabled: Bool?
+    let freeAccessActive: Bool
+    let freeAccessStartsAt: String?
+    let freeAccessEndsAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case freeAccessEnabled = "free_access_enabled"
+        case freeAccessActive = "free_access_active"
+        case freeAccessStartsAt = "free_access_starts_at"
+        case freeAccessEndsAt = "free_access_ends_at"
+    }
+}
+
 struct School: Identifiable, Decodable {
     let id: String
     let name: String

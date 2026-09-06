@@ -6,7 +6,9 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if auth.isBootstrapping || (auth.isAuthenticated && !auth.didLoadRole) {
+            if isBiologyUITest {
+                BiologyExplorerView()
+            } else if auth.isBootstrapping || (auth.isAuthenticated && !auth.didLoadRole) {
                 SplashView()
             } else if auth.isAuthenticated && auth.mustChangePassword {
                 // بوابة صلبة - حساب مؤسسي بكلمة سر مؤقتة لازم يغيّرها قبل أي
@@ -37,6 +39,7 @@ struct RootView: View {
         .preferredColorScheme(settings.appearanceMode.colorScheme)
         .id(settings.languageCode)
         .task(id: auth.isAuthenticated) {
+            await UsageLimiter.shared.refreshPlatformAccess()
             guard auth.isAuthenticated else {
                 NotificationSocketManager.shared.disconnect()
                 return
@@ -45,6 +48,21 @@ struct RootView: View {
             NotificationSocketManager.shared.connectIfNeeded()
             await NotificationSocketManager.shared.refreshUnreadCount()
         }
+        .task {
+            // الجدولة تتفعّل/تنتهي بدون حاجة المستخدم يقفل التطبيق ويفتحه.
+            while !Task.isCancelled {
+                await UsageLimiter.shared.refreshPlatformAccess()
+                try? await Task.sleep(for: .seconds(60))
+            }
+        }
+    }
+
+    private var isBiologyUITest: Bool {
+#if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-UITestScienceLabBiology")
+#else
+        false
+#endif
     }
 }
 

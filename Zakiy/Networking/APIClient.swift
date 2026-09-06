@@ -407,6 +407,26 @@ final class APIClient {
 
     // ---- Admin ----
 
+    func platformAccess() async throws -> PlatformAccessState {
+        let request = URLRequest(url: APIConfig.apiBase.appendingPathComponent("/api/platform/access"))
+        return try await send(request)
+    }
+
+    func adminPlatformAccess() async throws -> PlatformAccessState {
+        try await send(authorizedRequest("/api/admin/platform-access"))
+    }
+
+    func adminUpdatePlatformAccess(enabled: Bool, startsAt: Date?, endsAt: Date?) async throws -> PlatformAccessState {
+        var request = authorizedRequest("/api/admin/platform-access", method: "PUT")
+        let formatter = ISO8601DateFormatter()
+        jsonBody(&request, [
+            "free_access_enabled": enabled,
+            "free_access_starts_at": startsAt.map(formatter.string(from:)) ?? NSNull(),
+            "free_access_ends_at": endsAt.map(formatter.string(from:)) ?? NSNull(),
+        ])
+        return try await send(request)
+    }
+
     func adminCreateSchool(name: String, adminEmail: String, maxAccounts: Int) async throws -> CreateSchoolResponse {
         var request = authorizedRequest("/api/admin/schools", method: "POST")
         jsonBody(&request, ["name": name, "admin_email": adminEmail, "max_accounts": maxAccounts])

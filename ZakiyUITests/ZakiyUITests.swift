@@ -264,6 +264,26 @@ final class ZakiyUITests: XCTestCase {
         attach(app, name: "06b_science_lab_chemistry_webview")
     }
 
+    /// Regression: كان الضغط على أي تصنيف/حيوان بالأحياء ينهي التطبيق لأن
+    /// ScienceLabSession لم تكن مضمونة داخل وجهات NavigationStack.
+    func test06c_ScienceLabBiologyNavigationDoesNotCrash() throws {
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITestResetState", "-UITestForceEnglish", "-UITestScienceLabBiology"]
+        app.launch()
+
+        let mammals = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'mammals' OR label CONTAINS[c] 'ثدييات'")).firstMatch
+        XCTAssertTrue(mammals.waitForExistence(timeout: 10))
+        mammals.tap()
+        XCTAssertEqual(app.state, .runningForeground, "app must stay open after selecting a biology category")
+
+        let lion = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'lion' OR label CONTAINS[c] 'أسد'")).firstMatch
+        XCTAssertTrue(lion.waitForExistence(timeout: 10))
+        lion.tap()
+        Thread.sleep(forTimeInterval: 1)
+        XCTAssertEqual(app.state, .runningForeground, "app must stay open after opening an animal detail")
+        attach(app, name: "06c_science_lab_biology_detail")
+    }
+
     // MARK: - كل صف بشاشة الإعدادات (حساب فردي حقيقي) - فتح ورجوع بدون تعليق
 
     /// يدخل كل شاشة يوصلها حساب فردي عادي من الإعدادات (بروفايل، تعديل

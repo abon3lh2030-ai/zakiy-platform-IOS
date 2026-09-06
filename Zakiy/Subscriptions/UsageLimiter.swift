@@ -14,6 +14,28 @@ final class UsageLimiter {
     static let shared = UsageLimiter()
     private init() {}
 
+    private var platformFreeAccessEnabled = false
+    private var platformFreeAccessStartsAt: Date?
+    private var platformFreeAccessEndsAt: Date?
+
+    var platformFreeAccessActive: Bool {
+        guard platformFreeAccessEnabled else { return false }
+        let now = Date()
+        return (platformFreeAccessStartsAt == nil || now >= platformFreeAccessStartsAt!)
+            && (platformFreeAccessEndsAt == nil || now < platformFreeAccessEndsAt!)
+    }
+
+    func refreshPlatformAccess() async {
+        guard let state = try? await APIClient.shared.platformAccess() else {
+            platformFreeAccessEnabled = false
+            return
+        }
+        platformFreeAccessEnabled = state.freeAccessEnabled ?? state.freeAccessActive
+        let formatter = ISO8601DateFormatter()
+        platformFreeAccessStartsAt = state.freeAccessStartsAt.flatMap(formatter.date(from:))
+        platformFreeAccessEndsAt = state.freeAccessEndsAt.flatMap(formatter.date(from:))
+    }
+
     private let limits: [PlanTier: TierLimits] = [
         .free: TierLimits(librarySave: 5, soloSession: 3, groupRoom: 1, liveLesson: 0, archiveDepth: 8, performanceDepth: 5),
         .plus: TierLimits(librarySave: 20, soloSession: 5, groupRoom: 3, liveLesson: 1, archiveDepth: 15, performanceDepth: 8),
@@ -25,10 +47,11 @@ final class UsageLimiter {
     private var tier: PlanTier { StoreManager.shared.currentTier }
     private var tierLimits: TierLimits { limits[tier] ?? limits[.free]! }
 
-    var archiveDepth: Int? { tierLimits.archiveDepth }
-    var performanceDepth: Int? { tierLimits.performanceDepth }
+    var archiveDepth: Int? { platformFreeAccessActive ? nil : tierLimits.archiveDepth }
+    var performanceDepth: Int? { platformFreeAccessActive ? nil : tierLimits.performanceDepth }
 
     func dailyLimit(for action: LimitedAction) -> Int? {
+        if platformFreeAccessActive { return nil }
         switch action {
         case .soloSession: return tierLimits.soloSession
         case .groupRoom: return tierLimits.groupRoom

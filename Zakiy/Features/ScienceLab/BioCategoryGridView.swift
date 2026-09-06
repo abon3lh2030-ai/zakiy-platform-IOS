@@ -10,7 +10,7 @@ enum BioRoute: Hashable {
 
 struct BioCategoryGridView: View {
     @Binding var path: [BioRoute]
-    @Environment(ScienceLabSession.self) private var session
+    let session: ScienceLabSession
 
     private let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
 

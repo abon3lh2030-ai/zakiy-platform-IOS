@@ -10,8 +10,7 @@ struct BioAnimalDetailView: View {
     }
 
     let kind: Kind
-
-    @Environment(ScienceLabSession.self) private var session
+    let session: ScienceLabSession
 
     var body: some View {
         ScrollView {
