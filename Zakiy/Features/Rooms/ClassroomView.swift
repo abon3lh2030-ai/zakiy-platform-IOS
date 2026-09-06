@@ -87,6 +87,22 @@ struct ClassroomView: View {
         VStack(spacing: 0) {
             header
 
+            if let summary = socket.roomState.sharedSummary, !summary.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(Loc.t("shared_summary")).font(.headline)
+                    Text(summary)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(5)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color.appCard, in: RoundedRectangle(cornerRadius: 14))
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+                .accessibilityIdentifier("classroomSharedSummary")
+            }
+
             VStack(spacing: 0) {
                 WhiteboardCanvasView(socket: socket)
                     .frame(maxHeight: .infinity)

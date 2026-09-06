@@ -290,6 +290,26 @@ final class ZakiyUITests: XCTestCase {
         attach(app, name: "06c_science_lab_biology_detail")
     }
 
+    func test06d_SoloStudyShowsSummaryOption() throws {
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITestResetState", "-UITestForceEnglish", "-UITestSoloStudy"]
+        app.launch()
+
+        let summaryOption = app.buttons["studySummaryOption"]
+        XCTAssertTrue(summaryOption.waitForExistence(timeout: 10), "solo study must show the summary option")
+        summaryOption.tap()
+        XCTAssertTrue(app.navigationBars["Summary"].waitForExistence(timeout: 5), "summary option must open the summary screen")
+
+        let summaryContent = app.descendants(matching: .any)["studySummaryContent"]
+        if !summaryContent.waitForExistence(timeout: 30) {
+            let retry = app.buttons["studySummaryRetry"]
+            XCTAssertTrue(retry.waitForExistence(timeout: 5), "summary failure must show a retry action")
+            retry.tap()
+            XCTAssertTrue(summaryContent.waitForExistence(timeout: 30), "AI summary must be rendered after retry")
+        }
+        attach(app, name: "06d_solo_study_summary")
+    }
+
     // MARK: - كل صف بشاشة الإعدادات (حساب فردي حقيقي) - فتح ورجوع بدون تعليق
 
     /// يدخل كل شاشة يوصلها حساب فردي عادي من الإعدادات (بروفايل، تعديل

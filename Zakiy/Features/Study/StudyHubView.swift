@@ -3,9 +3,19 @@ import SwiftUI
 struct StudyHubView: View {
     let sourceText: String
 
+    @State private var generatedSummary: String?
+
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
+                NavigationLink {
+                    StudySummaryView(sourceText: sourceText, summary: $generatedSummary)
+                } label: {
+                    StudyOptionCard(icon: "doc.text.fill", title: Loc.t("summary"), subtitle: Loc.t("summary_option_subtitle"))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("studySummaryOption")
+
                 NavigationLink {
                     ChatAssistantView(sourceText: sourceText)
                 } label: {

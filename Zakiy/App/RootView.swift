@@ -6,7 +6,11 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if isBiologyUITest {
+            if isSoloStudyUITest {
+                NavigationStack {
+                    StudyHubView(sourceText: "Water changes state when thermal energy is added or removed. Heating increases particle motion, while cooling reduces it.")
+                }
+            } else if isBiologyUITest {
                 BiologyExplorerView()
             } else if auth.isBootstrapping || (auth.isAuthenticated && !auth.didLoadRole) {
                 SplashView()
@@ -60,6 +64,14 @@ struct RootView: View {
     private var isBiologyUITest: Bool {
 #if targetEnvironment(simulator)
         ProcessInfo.processInfo.arguments.contains("-UITestScienceLabBiology")
+#else
+        false
+#endif
+    }
+
+    private var isSoloStudyUITest: Bool {
+#if targetEnvironment(simulator)
+        ProcessInfo.processInfo.arguments.contains("-UITestSoloStudy")
 #else
         false
 #endif
