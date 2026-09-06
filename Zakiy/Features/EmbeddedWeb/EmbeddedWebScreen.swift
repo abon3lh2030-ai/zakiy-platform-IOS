@@ -15,11 +15,29 @@ enum EmbeddedWebTarget {
     /// دالة JS عامة موجودة أصلًا بـ website/src/js/04-profile.js تنقّل مباشرة
     /// لشاشة الهدف بعد ما تحمّل الصفحة وتتأكد الجلسة - الكيمياء هي التبويب
     /// الافتراضي بمختبر العلوم فما تحتاج نداء إضافي بعد showScienceLabScreen
-    var jsEntryCall: String {
+    private var functionName: String {
         switch self {
-        case .roboticsLab: return "if (typeof showRoboticsLabScreen === 'function') { showRoboticsLabScreen(); }"
-        case .scienceLab: return "if (typeof showScienceLabScreen === 'function') { showScienceLabScreen(); }"
+        case .roboticsLab: return "showRoboticsLabScreen"
+        case .scienceLab: return "showScienceLabScreen"
         }
+    }
+
+    private var elementID: String {
+        switch self {
+        case .roboticsLab: return "step-robotics-lab"
+        case .scienceLab: return "step-science-lab"
+        }
+    }
+
+    var jsEntryCall: String {
+        """
+        (function(){try{
+          if (typeof \(functionName) === 'function') { \(functionName)(); }
+          if (typeof hide === 'function') { hide('mode-select'); }
+          var el = document.getElementById('\(elementID)');
+          if (el) { el.scrollIntoView({block:'start'}); }
+        }catch(e){}})();
+        """
     }
 }
 
@@ -105,7 +123,14 @@ private struct EmbeddedWebViewRepresentable: UIViewRepresentable {
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             isLoading.wrappedValue = false
             loadError.wrappedValue = nil
-            webView.evaluateJavaScript(target.jsEntryCall, completionHandler: nil)
+            // استعادة جلسة Supabase بالموقع قد تنقل الصفحة إلى mode-select بعد
+            // didFinish بقليل. نعيد توجيه الهدف لفترة قصيرة ونثبت موضع المختبر
+            // حتى يظهر مباشرة بدل رأس الصفحة، مثل نسخة Android.
+            for attempt in 0...24 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + (Double(attempt) * 0.8)) { [weak webView] in
+                    webView?.evaluateJavaScript(self.target.jsEntryCall, completionHandler: nil)
+                }
+            }
         }
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {

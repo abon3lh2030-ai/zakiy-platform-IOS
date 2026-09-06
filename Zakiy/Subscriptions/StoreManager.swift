@@ -8,7 +8,7 @@ final class StoreManager {
 
     var products: [Product] = []
     var purchasedProductIDs: Set<String> = []
-    nonisolated(unsafe) var updatesTask: Task<Void, Never>?
+    var updatesTask: Task<Void, Never>?
 
     private init() {
         updatesTask = listenForTransactions()
@@ -68,12 +68,8 @@ final class StoreManager {
             for await result in Transaction.updates {
                 if case .verified(let transaction) = result {
                     await transaction.finish()
-                    await MainActor.run {
-                        Task {
-                            await StoreManager.shared.refreshPurchasedProducts()
-                            await StoreManager.shared.syncWithBackend(productID: transaction.productID, transactionID: String(transaction.id))
-                        }
-                    }
+                    await StoreManager.shared.refreshPurchasedProducts()
+                    await StoreManager.shared.syncWithBackend(productID: transaction.productID, transactionID: String(transaction.id))
                 }
             }
         }
