@@ -21,6 +21,8 @@ struct BodyHotspotImageView: View {
             GeometryReader { geo in
                 ZStack {
                     imageContent
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .scaleEffect(activeHotspot != nil ? 2.4 : 1, anchor: zoomAnchorValue)
 
                     ForEach(data.hotspots) { hotspot in
                         Button {
@@ -29,16 +31,19 @@ struct BodyHotspotImageView: View {
                             Circle()
                                 .fill(Color.accentColor.opacity(activeHotspot?.id == hotspot.id ? 0.95 : 0.55))
                                 .overlay(Circle().stroke(.white, lineWidth: 2))
-                                .frame(width: 18, height: 18)
+                                .shadow(color: Color.accentColor.opacity(0.35), radius: 5)
+                                .frame(width: 26, height: 26)
                         }
                         .position(x: geo.size.width * hotspot.x / 100, y: geo.size.height * hotspot.y / 100)
+                        .opacity(activeHotspot == nil || activeHotspot?.id == hotspot.id ? 1 : 0)
+                        .allowsHitTesting(activeHotspot == nil || activeHotspot?.id == hotspot.id)
+                        .accessibilityIdentifier("biologyHotspot_\(hotspot.id)")
                     }
                 }
                 .frame(width: geo.size.width, height: geo.size.height)
-                .scaleEffect(activeHotspot != nil ? 2.1 : 1, anchor: zoomAnchorValue)
                 .clipped()
             }
-            .frame(height: 320)
+            .aspectRatio(data.displayAspectRatio, contentMode: .fit)
             .background(Color.appCard, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .animation(.easeInOut(duration: 0.3), value: activeHotspot)
@@ -47,6 +52,7 @@ struct BodyHotspotImageView: View {
                 Button(Loc.t("sl_zoom_out")) {
                     withAnimation { activeHotspot = nil }
                 }
+                .accessibilityIdentifier("biologyZoomOut")
                 .buttonStyle(.bordered)
             }
 
@@ -75,12 +81,15 @@ struct BodyHotspotImageView: View {
         case .asset(let name):
             Image(name)
                 .resizable()
-                .scaledToFit()
+                .scaledToFill()
+                .accessibilityIdentifier("biologyBodyImageLoaded_\(data.id)")
         case .remote:
             AsyncImage(url: data.remoteDisplayURL) { phase in
                 switch phase {
                 case .success(let image):
-                    image.resizable().scaledToFit()
+                    image.resizable()
+                        .scaledToFill()
+                        .accessibilityIdentifier("biologyBodyImageLoaded_\(data.id)")
                 case .failure:
                     Text(Loc.t("sl_body_img_error"))
                         .font(.footnote)

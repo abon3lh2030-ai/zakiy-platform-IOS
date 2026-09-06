@@ -32,9 +32,8 @@ struct BodyHotspot: Identifiable, Hashable {
     var id: String { "\(part)-\(x)-\(y)" }
 }
 
-/// مصدر صورة الجسم - إما أصل مرفق بالتطبيق (الفيل والتمساح: رسومات المستخدم)
-/// أو رابط خارجي حر الترخيص (باقي الحيوانات + الإنسان، من ويكيميديا كومنز أو
-/// كتاب علمي قديم منتهي الحقوق) يُحمَّل مباشرة بـ AsyncImage
+/// مصدر صورة الجسم. كل صور الموقع مرفقة الآن داخل التطبيق حتى تظهر فورًا
+/// وبشكل ثابت، مع إبقاء دعم الرابط الخارجي لأي صورة مستقبلية.
 enum BodyImageSource: Hashable {
     case asset(String)
     case remote(URL)
@@ -100,13 +99,12 @@ enum ScienceLabBioData {
     ]
 
     // ---------- SL_BODY_IMAGES ----------
-    // ملاحظة: الفيل والتمساح صور محلية (رسومات المستخدم، أُضيفت لكتالوج
-    // الأصول باسم AnimalElephantBody/AnimalCrocodileBody) - كل الباقي روابط
-    // ويكيميديا كومنز حرة الترخيص تُحمَّل مباشرة (مطابقة لموقع الويب بالضبط)
+    // الصور نفسها المستخدمة في موقع الويب، محفوظة محليًا بكتالوج الأصول حتى
+    // لا يعتمد المختبر على الشبكة أو دعم SVG الأصلي في iOS.
     static let bodyImages: [String: BodyImageData] = [
         "human": BodyImageData(
             id: "human",
-            source: .remote(URL(string: "https://upload.wikimedia.org/wikipedia/commons/e/e3/Internal_organs.svg")!),
+            source: .asset("BiologyHuman"),
             creditKey: nil,
             hotspots: [
                 BodyHotspot(part: "brain", x: 48.6, y: 16.4),
@@ -123,7 +121,7 @@ enum ScienceLabBioData {
         ),
         "dog": BodyImageData(
             id: "dog",
-            source: .remote(URL(string: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Dog_Internal_Anatomy.svg")!),
+            source: .asset("BiologyDog"),
             creditKey: "sl_body_credit_dog",
             hotspots: [
                 BodyHotspot(part: "brain", x: 16.7, y: 9.2),
@@ -167,7 +165,7 @@ enum ScienceLabBioData {
         ),
         "cat": BodyImageData(
             id: "cat",
-            source: .remote(URL(string: "https://upload.wikimedia.org/wikipedia/commons/5/5a/Scheme_cat_anatomy.svg")!),
+            source: .asset("BiologyCat"),
             creditKey: "sl_body_credit_cat",
             hotspots: [
                 BodyHotspot(part: "brain", x: 27.9, y: 25.5),
@@ -182,7 +180,7 @@ enum ScienceLabBioData {
         ),
         "reptile": BodyImageData(
             id: "reptile",
-            source: .remote(URL(string: "https://upload.wikimedia.org/wikipedia/commons/4/4d/Snake-anatomy.svg")!),
+            source: .asset("BiologyReptile"),
             creditKey: "sl_body_credit_reptile",
             hotspots: [
                 BodyHotspot(part: "heart", x: 50, y: 15),
@@ -196,7 +194,7 @@ enum ScienceLabBioData {
         ),
         "fish": BodyImageData(
             id: "fish",
-            source: .remote(URL(string: "https://upload.wikimedia.org/wikipedia/commons/b/b0/Fish-anatomy.svg")!),
+            source: .asset("BiologyFish"),
             creditKey: "sl_body_credit_fish",
             hotspots: [
                 BodyHotspot(part: "heart", x: 28.9, y: 58.8),
@@ -209,7 +207,7 @@ enum ScienceLabBioData {
         ),
         "whale": BodyImageData(
             id: "whale",
-            source: .remote(URL(string: "https://upload.wikimedia.org/wikipedia/commons/8/88/Orca_internal_anatomy.svg")!),
+            source: .asset("BiologyWhale"),
             creditKey: "sl_body_credit_whale",
             hotspots: [
                 BodyHotspot(part: "brain", x: 14, y: 51.7),
@@ -224,7 +222,7 @@ enum ScienceLabBioData {
         ),
         "turtle": BodyImageData(
             id: "turtle",
-            source: .remote(URL(string: "https://upload.wikimedia.org/wikipedia/commons/c/cb/Scheme_turtle_anatomy-numbers.svg")!),
+            source: .asset("BiologyTurtle"),
             creditKey: "sl_body_credit_turtle",
             hotspots: [
                 BodyHotspot(part: "lungs", x: 74, y: 37.9),
@@ -237,7 +235,7 @@ enum ScienceLabBioData {
         ),
         "frog": BodyImageData(
             id: "frog",
-            source: .remote(URL(string: "https://upload.wikimedia.org/wikipedia/commons/0/0e/The_biology_of_the_frog_%28Page_75%2C_Fig._10%29_BHL7720765.jpg")!),
+            source: .asset("BiologyFrog"),
             creditKey: "sl_body_credit_frog",
             hotspots: [
                 BodyHotspot(part: "heart", x: 44.9, y: 6.7),
@@ -249,7 +247,7 @@ enum ScienceLabBioData {
         ),
         "bird": BodyImageData(
             id: "bird",
-            source: .remote(URL(string: "https://upload.wikimedia.org/wikipedia/commons/1/1c/Gastrointestinal_track_of_the_Mallard-Uklad_pokarmowy_krzyzowki.svg")!),
+            source: .asset("BiologyBird"),
             creditKey: "sl_body_credit_bird",
             hotspots: [
                 BodyHotspot(part: "stomach", x: 48.5, y: 75),

@@ -58,7 +58,7 @@ struct RootView: View {
     }
 
     private var isBiologyUITest: Bool {
-#if DEBUG
+#if targetEnvironment(simulator)
         ProcessInfo.processInfo.arguments.contains("-UITestScienceLabBiology")
 #else
         false

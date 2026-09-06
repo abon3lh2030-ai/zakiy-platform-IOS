@@ -279,7 +279,13 @@ final class ZakiyUITests: XCTestCase {
         let lion = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'lion' OR label CONTAINS[c] 'أسد'")).firstMatch
         XCTAssertTrue(lion.waitForExistence(timeout: 10))
         lion.tap()
-        Thread.sleep(forTimeInterval: 1)
+        let loadedImage = app.descendants(matching: .any)["biologyBodyImageLoaded_cat"]
+        XCTAssertTrue(loadedImage.waitForExistence(timeout: 15), "biology image must load")
+
+        let hotspot = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'biologyHotspot_'")).firstMatch
+        XCTAssertTrue(hotspot.waitForExistence(timeout: 5), "biology hotspots must appear")
+        hotspot.tap()
+        XCTAssertTrue(app.buttons["biologyZoomOut"].waitForExistence(timeout: 5), "tapping a hotspot must zoom the image")
         XCTAssertEqual(app.state, .runningForeground, "app must stay open after opening an animal detail")
         attach(app, name: "06c_science_lab_biology_detail")
     }
