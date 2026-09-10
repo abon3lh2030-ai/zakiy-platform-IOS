@@ -46,6 +46,9 @@ final class AppSettings {
         didSet { UserDefaults.standard.set(guestName, forKey: "zakiy.guestName") }
     }
 
+    /// One-shot intent received from a home-screen widget.
+    var pendingWidgetRoute: String? = nil
+
     var locale: Locale { Locale(identifier: languageCode) }
     var layoutDirection: LayoutDirection { languageCode == "ar" ? .rightToLeft : .leftToRight }
 

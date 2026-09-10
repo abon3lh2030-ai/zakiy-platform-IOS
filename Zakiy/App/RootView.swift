@@ -42,6 +42,9 @@ struct RootView: View {
         .environment(\.layoutDirection, settings.layoutDirection)
         .preferredColorScheme(settings.appearanceMode.colorScheme)
         .id(settings.languageCode)
+        .onOpenURL { url in
+            settings.pendingWidgetRoute = url.host ?? url.pathComponents.dropFirst().first
+        }
         .task(id: auth.isAuthenticated) {
             await UsageLimiter.shared.refreshPlatformAccess()
             guard auth.isAuthenticated else {
@@ -49,6 +52,7 @@ struct RootView: View {
                 return
             }
             try? await APIClient.shared.pingActive()
+            await WidgetDataStore.refresh()
             NotificationSocketManager.shared.connectIfNeeded()
             await NotificationSocketManager.shared.refreshUnreadCount()
         }

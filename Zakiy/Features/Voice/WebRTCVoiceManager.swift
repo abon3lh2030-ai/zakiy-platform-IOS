@@ -46,7 +46,7 @@ private final class PeerConnectionDelegateBox: NSObject, RTCPeerConnectionDelega
 final class WebRTCVoiceManager {
     var isInVoice = false
     var isMuted = false
-    nonisolated(unsafe) var speakingSids: Set<String> = []
+    var speakingSids: Set<String> = []
 
     private var factory: RTCPeerConnectionFactory?
     private var peerConnections: [String: RTCPeerConnection] = [:]
@@ -138,7 +138,7 @@ final class WebRTCVoiceManager {
         let session = RTCAudioSession.sharedInstance()
         session.lockForConfiguration()
         do {
-            try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.allowBluetooth, .defaultToSpeaker])
+            try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.allowBluetoothHFP, .defaultToSpeaker])
             try session.setActive(true)
         } catch {
             // Non-fatal: voice will simply not have optimal routing.
@@ -172,11 +172,12 @@ final class WebRTCVoiceManager {
 
         if isOfferer {
             let offerConstraints = RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
-            connection.offer(for: offerConstraints) { [weak self] sdp, _ in
+            let socket = self.socket
+            connection.offer(for: offerConstraints) { sdp, _ in
                 guard let sdp else { return }
                 connection.setLocalDescription(sdp) { _ in }
                 Task { @MainActor in
-                    self?.socket?.emitVoiceOffer(to: sid, sdp: sdp.sdp)
+                    socket?.emitVoiceOffer(to: sid, sdp: sdp.sdp)
                 }
             }
         }
@@ -186,13 +187,14 @@ final class WebRTCVoiceManager {
         createPeerConnection(for: sid, isOfferer: false)
         guard let connection = peerConnections[sid] else { return }
         let remoteSdp = RTCSessionDescription(type: .offer, sdp: sdpString)
-        connection.setRemoteDescription(remoteSdp) { [weak self] _ in
+        let socket = self.socket
+        connection.setRemoteDescription(remoteSdp) { _ in
             let answerConstraints = RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
             connection.answer(for: answerConstraints) { sdp, _ in
                 guard let sdp else { return }
                 connection.setLocalDescription(sdp) { _ in }
                 Task { @MainActor in
-                    self?.socket?.emitVoiceAnswer(to: sid, sdp: sdp.sdp)
+                    socket?.emitVoiceAnswer(to: sid, sdp: sdp.sdp)
                 }
             }
         }

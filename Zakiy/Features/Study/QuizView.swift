@@ -120,5 +120,6 @@ struct QuizView: View {
             wrongTopics: wrongTopics,
             mode: "solo"
         )
+        await WidgetDataStore.refresh()
     }
 }

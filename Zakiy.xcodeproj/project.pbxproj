@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3DC1036CB390ED146040C277 /* ZakiyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0A569D6D2C1F5914D47693 /* ZakiyUITests.swift */; };
+		7F0000000000000000000001 /* ZakiyWidgets.appex in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7F0000000000000000000002 /* ZakiyWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A00000000000000000000051 /* SocketIO in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000041 /* SocketIO */; };
 		A00000000000000000000052 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000042 /* Supabase */; };
 		A00000000000000000000053 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000043 /* WebRTC */; };
@@ -16,6 +17,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		7F0000000000000000000012 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000010 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7F0000000000000000000005;
+			remoteInfo = ZakiyWidgets;
+		};
 		E331664F6934396EFAD0D208 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A00000000000000000000010 /* Project object */;
@@ -25,7 +33,21 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		7F0000000000000000000006 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				7F0000000000000000000001 /* ZakiyWidgets.appex in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		7F0000000000000000000002 /* ZakiyWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ZakiyWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		804DA97742F27BFCBAE0C9A0 /* ZakiyUITestsLaunchTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ZakiyUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		9E0A569D6D2C1F5914D47693 /* ZakiyUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ZakiyUITests.swift; sourceTree = "<group>"; };
 		A00000000000000000000001 /* Zakiy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zakiy.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -33,17 +55,40 @@
 		F1C24EFD5309B526EFC5D932 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		912C8E773052E6880063B392 /* Exceptions for "ZakiyWidgets" folder in "ZakiyWidgets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7F0000000000000000000005 /* ZakiyWidgets */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A00000000000000000000002 /* Zakiy */ = {
+		7F0000000000000000000003 /* ZakiyWidgets */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				912C8E773052E6880063B392 /* Exceptions for "ZakiyWidgets" folder in "ZakiyWidgets" target */,
 			);
+			path = ZakiyWidgets;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000002 /* Zakiy */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Zakiy;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		7F0000000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A00000000000000000000008 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -71,7 +116,6 @@
 				9E0A569D6D2C1F5914D47693 /* ZakiyUITests.swift */,
 				804DA97742F27BFCBAE0C9A0 /* ZakiyUITestsLaunchTests.swift */,
 			);
-			name = ZakiyUITests;
 			path = ZakiyUITests;
 			sourceTree = "<group>";
 		};
@@ -79,6 +123,7 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000002 /* Zakiy */,
+				7F0000000000000000000003 /* ZakiyWidgets */,
 				A00000000000000000000004 /* Products */,
 				D2745C226EA59FED7704E035 /* Frameworks */,
 				17D454574E3CC7CD008D6C01 /* ZakiyUITests */,
@@ -89,6 +134,7 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000001 /* Zakiy.app */,
+				7F0000000000000000000002 /* ZakiyWidgets.appex */,
 				BCEB624D6B7CFC9445295429 /* ZakiyUITests.xctest */,
 			);
 			name = Products;
@@ -131,6 +177,26 @@
 			productReference = BCEB624D6B7CFC9445295429 /* ZakiyUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		7F0000000000000000000005 /* ZakiyWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7F0000000000000000000011 /* Build configuration list for PBXNativeTarget "ZakiyWidgets" */;
+			buildPhases = (
+				7F0000000000000000000008 /* Sources */,
+				7F0000000000000000000004 /* Frameworks */,
+				7F0000000000000000000009 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				7F0000000000000000000003 /* ZakiyWidgets */,
+			);
+			name = ZakiyWidgets;
+			productName = ZakiyWidgets;
+			productReference = 7F0000000000000000000002 /* ZakiyWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		A00000000000000000000005 /* Zakiy */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A00000000000000000000006 /* Build configuration list for PBXNativeTarget "Zakiy" */;
@@ -138,10 +204,12 @@
 				A00000000000000000000007 /* Sources */,
 				A00000000000000000000008 /* Frameworks */,
 				A00000000000000000000009 /* Resources */,
+				7F0000000000000000000006 /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				7F0000000000000000000007 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A00000000000000000000002 /* Zakiy */,
@@ -164,7 +232,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2600;
-				LastUpgradeCheck = 2600;
+				LastUpgradeCheck = 2660;
 				TargetAttributes = {
 					A00000000000000000000005 = {
 						CreatedOnToolsVersion = 26.0;
@@ -182,7 +250,7 @@
 			mainGroup = A00000000000000000000003;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				A00000000000000000000120 /* XCRemoteSwiftPackageReference "socket.io-client-swift" */,
+				A00000000000000000000120 /* XCRemoteSwiftPackageReference "socket" */,
 				A00000000000000000000121 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 				A00000000000000000000122 /* XCRemoteSwiftPackageReference "WebRTC" */,
 			);
@@ -192,6 +260,7 @@
 			projectRoot = "";
 			targets = (
 				A00000000000000000000005 /* Zakiy */,
+				7F0000000000000000000005 /* ZakiyWidgets */,
 				695279F2B733CB2E06735A2C /* ZakiyUITests */,
 			);
 		};
@@ -199,6 +268,13 @@
 
 /* Begin PBXResourcesBuildPhase section */
 		705402F084B3D3B2AA3DBC52 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7F0000000000000000000009 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -224,6 +300,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7F0000000000000000000008 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A00000000000000000000007 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -240,6 +323,12 @@
 			target = A00000000000000000000005 /* Zakiy */;
 			targetProxy = E331664F6934396EFAD0D208 /* PBXContainerItemProxy */;
 		};
+		7F0000000000000000000007 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ZakiyWidgets;
+			target = 7F0000000000000000000005 /* ZakiyWidgets */;
+			targetProxy = 7F0000000000000000000012 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -248,7 +337,6 @@
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.zakiy.platform.ZakiyUITests;
@@ -264,7 +352,6 @@
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.zakiy.platform.ZakiyUITests;
@@ -276,26 +363,90 @@
 			};
 			name = Release;
 		};
+		7F0000000000000000000013 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ZakiyWidgets/ZakiyWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ZakiyWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zakiy.platform.ZakiyWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		7F0000000000000000000014 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ZakiyWidgets/ZakiyWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ZakiyWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zakiy.platform.ZakiyWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		A00000000000000000000012 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = N2776FLTW9;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -304,14 +455,38 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = N2776FLTW9;
 				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -325,11 +500,12 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = Zakiy/Zakiy.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "ذكّي";
+				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleURLName = \"com.zakiy.platform\";\n    CFBundleURLSchemes =     (\n        zakiy\n    );\n}";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSCameraUsageDescription = "نحتاج الكاميرا لمسح رمز QR للانضمام السريع للغرف والأصدقاء.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "نحتاج المايك للصوت الجماعي داخل غرف المذاكرة.";
@@ -356,11 +532,12 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = Zakiy/Zakiy.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "ذكّي";
+				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleURLName = \"com.zakiy.platform\";\n    CFBundleURLSchemes =     (\n        zakiy\n    );\n}";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSCameraUsageDescription = "نحتاج الكاميرا لمسح رمز QR للانضمام السريع للغرف والأصدقاء.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "نحتاج المايك للصوت الجماعي داخل غرف المذاكرة.";
@@ -383,6 +560,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		7F0000000000000000000011 /* Build configuration list for PBXNativeTarget "ZakiyWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7F0000000000000000000013 /* Debug */,
+				7F0000000000000000000014 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		80010BEE801727133FDA1C85 /* Build configuration list for PBXNativeTarget "ZakiyUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -413,7 +599,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		A00000000000000000000120 /* XCRemoteSwiftPackageReference "socket.io-client-swift" */ = {
+		A00000000000000000000120 /* XCRemoteSwiftPackageReference "socket" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/socketio/socket.io-client-swift";
 			requirement = {
@@ -442,7 +628,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		A00000000000000000000041 /* SocketIO */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00000000000000000000120 /* XCRemoteSwiftPackageReference "socket.io-client-swift" */;
+			package = A00000000000000000000120 /* XCRemoteSwiftPackageReference "socket" */;
 			productName = SocketIO;
 		};
 		A00000000000000000000042 /* Supabase */ = {

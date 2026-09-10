@@ -118,6 +118,10 @@ struct HomeView: View {
         .sheet(isPresented: $showPaywall) {
             PaywallView(triggeredBy: .soloSession)
         }
+        .onAppear { consumeWidgetRouteIfNeeded() }
+        .onChange(of: settings.pendingWidgetRoute) { _, _ in
+            consumeWidgetRouteIfNeeded()
+        }
     }
 
     private var greetingHeader: some View {
@@ -148,6 +152,16 @@ struct HomeView: View {
         } catch {
             errorMessage = Loc.t("error_generic")
         }
+    }
+
+    private func consumeWidgetRouteIfNeeded() {
+        guard settings.pendingWidgetRoute == "solo" else { return }
+        settings.pendingWidgetRoute = nil
+        guard UsageLimiter.shared.canPerform(.soloSession) else {
+            showPaywall = true
+            return
+        }
+        showSourceChooser = true
     }
 }
 
