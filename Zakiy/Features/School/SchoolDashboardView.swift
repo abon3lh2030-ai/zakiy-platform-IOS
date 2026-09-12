@@ -41,6 +41,9 @@ struct SchoolDashboardView: View {
                     DashboardMenuRow(icon: "checklist", tint: .purple, title: Loc.t("tab_attendance"))
                 }
                 .accessibilityIdentifier("school_dash_attendance_row")
+                NavigationLink { SchoolCurriculumPathView() } label: {
+                    DashboardMenuRow(icon: "point.3.connected.trianglepath.dotted", tint: .cyan, title: "مسار كتب المدرسة")
+                }
                 // مكتبة مدير/إداري المدرسة الشخصية - نفس شاشة مكتبة الطلاب
                 // بالضبط، بس مدموجة هنا لأن حساب مؤسسي ما يوصل MainTabView إطلاقًا
                 NavigationLink { LibraryListView() } label: {

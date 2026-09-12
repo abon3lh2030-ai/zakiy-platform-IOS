@@ -152,6 +152,22 @@ final class APIClient {
         try await sendVoid(authorizedRequest("/api/library/\(id)", method: "DELETE"))
     }
 
+    func createSchoolLibraryBook(title: String, extractedText: String) async throws {
+        var request = authorizedRequest("/api/school/library", method: "POST")
+        jsonBody(&request, ["title": title, "extracted_text": extractedText])
+        try await sendVoid(request)
+    }
+
+    func renameSchoolLibraryBook(id: String, title: String) async throws {
+        var request = authorizedRequest("/api/school/library/\(id)", method: "PATCH")
+        jsonBody(&request, ["title": title])
+        try await sendVoid(request)
+    }
+
+    func deleteSchoolLibraryBook(id: String) async throws {
+        try await sendVoid(authorizedRequest("/api/school/library/\(id)", method: "DELETE"))
+    }
+
     // ---------- دفتر الملاحظات (حساب فردي بس - الباك إند يرفض أي حساب مؤسسي) ----------
     func noteFolders() async throws -> [NoteFolder] {
         struct Response: Decodable { let folders: [NoteFolder] }
@@ -407,6 +423,32 @@ final class APIClient {
 
     // ---- Admin ----
 
+    func adminCurriculumPaths() async throws -> [CurriculumPath] {
+        struct Response: Decodable { let paths: [CurriculumPath] }
+        let result: Response = try await send(authorizedRequest("/api/admin/curriculum-paths"))
+        return result.paths
+    }
+
+    func adminCreateCurriculumPath(name: String) async throws {
+        var request = authorizedRequest("/api/admin/curriculum-paths", method: "POST")
+        jsonBody(&request, ["name": name])
+        try await sendVoid(request)
+    }
+
+    func adminDeleteCurriculumPath(id: String) async throws {
+        try await sendVoid(authorizedRequest("/api/admin/curriculum-paths/\(id)", method: "DELETE"))
+    }
+
+    func adminAddCurriculumBook(pathId: String, title: String, extractedText: String) async throws {
+        var request = authorizedRequest("/api/admin/curriculum-paths/\(pathId)/books", method: "POST")
+        jsonBody(&request, ["title": title, "extracted_text": extractedText])
+        try await sendVoid(request)
+    }
+
+    func adminDeleteCurriculumBook(id: String) async throws {
+        try await sendVoid(authorizedRequest("/api/admin/curriculum-books/\(id)", method: "DELETE"))
+    }
+
     func platformAccess() async throws -> PlatformAccessState {
         let request = URLRequest(url: APIConfig.apiBase.appendingPathComponent("/api/platform/access"))
         return try await send(request)
@@ -459,6 +501,16 @@ final class APIClient {
 
     func schoolInfo() async throws -> SchoolInfo {
         try await send(authorizedRequest("/api/school/info"))
+    }
+
+    func schoolCurriculumState() async throws -> SchoolCurriculumState {
+        try await send(authorizedRequest("/api/school/curriculum-path"))
+    }
+
+    func schoolSetCurriculumPath(id: String?) async throws {
+        var request = authorizedRequest("/api/school/curriculum-path", method: "PUT")
+        jsonBody(&request, ["path_id": id ?? NSNull()])
+        try await sendVoid(request)
     }
 
     func schoolAddTeacher(name: String, email: String) async throws -> GeneratedCredentials {

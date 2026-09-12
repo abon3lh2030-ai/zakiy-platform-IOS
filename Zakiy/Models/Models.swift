@@ -24,10 +24,39 @@ struct LibraryBook: Identifiable, Codable, Hashable {
     let id: String
     let title: String
     let createdAt: String?
+    let source: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, title
+        case id, title, source
         case createdAt = "created_at"
+    }
+}
+
+struct CurriculumBook: Identifiable, Codable, Hashable {
+    let id: String
+    let title: String
+}
+
+struct CurriculumPath: Identifiable, Codable, Hashable {
+    let id: String
+    let name: String
+    let isActive: Bool?
+    let bookCount: Int?
+    let books: [CurriculumBook]?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, books
+        case isActive = "is_active"
+        case bookCount = "book_count"
+    }
+}
+
+struct SchoolCurriculumState: Codable {
+    let selectedPathId: String?
+    let paths: [CurriculumPath]
+    enum CodingKeys: String, CodingKey {
+        case paths
+        case selectedPathId = "selected_path_id"
     }
 }
 

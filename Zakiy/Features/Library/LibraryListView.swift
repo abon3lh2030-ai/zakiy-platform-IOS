@@ -45,19 +45,19 @@ struct LibraryListView: View {
                             }
                             .buttonStyle(.plain)
 
-                            Button(Loc.t("rename")) {
+                            if book.source != "curriculum" { Button(Loc.t("rename")) {
                                 renameText = book.title
                                 renamingBook = book
                             }
                             .buttonStyle(.bordered)
                             .tint(.blue)
-                            .controlSize(.small)
+                            .controlSize(.small) }
 
-                            Button(Loc.t("delete"), role: .destructive) {
+                            if book.source != "curriculum" { Button(Loc.t("delete"), role: .destructive) {
                                 deletingBook = book
                             }
                             .buttonStyle(.bordered)
-                            .controlSize(.small)
+                            .controlSize(.small) }
                         }
                     }
                 }
@@ -140,7 +140,8 @@ struct LibraryListView: View {
 
     private func deleteBook(_ book: LibraryBook) async {
         books.removeAll { $0.id == book.id }
-        try? await APIClient.shared.deleteLibraryBook(id: book.id)
+        if book.source == "school" { try? await APIClient.shared.deleteSchoolLibraryBook(id: book.id) }
+        else { try? await APIClient.shared.deleteLibraryBook(id: book.id) }
     }
 
     private func uploadForLibrary(url: URL) async {
@@ -167,7 +168,11 @@ struct LibraryListView: View {
         guard let text = pendingExtractedText, !title.isEmpty else { return }
         pendingExtractedText = nil
         do {
-            _ = try await APIClient.shared.createLibraryBook(title: title, extractedText: text)
+            if auth.role == "school_admin" || auth.role == "school_administration" {
+                try await APIClient.shared.createSchoolLibraryBook(title: title, extractedText: text)
+            } else {
+                _ = try await APIClient.shared.createLibraryBook(title: title, extractedText: text)
+            }
             await load()
         } catch {
             errorMessage = Loc.t("error_generic")
@@ -179,9 +184,10 @@ struct LibraryListView: View {
         renamingBook = nil
         guard !newTitle.isEmpty else { return }
         do {
-            try await APIClient.shared.renameLibraryBook(id: book.id, title: newTitle)
+            if book.source == "school" { try await APIClient.shared.renameSchoolLibraryBook(id: book.id, title: newTitle) }
+            else { try await APIClient.shared.renameLibraryBook(id: book.id, title: newTitle) }
             if let index = books.firstIndex(where: { $0.id == book.id }) {
-                books[index] = LibraryBook(id: book.id, title: newTitle, createdAt: book.createdAt)
+                books[index] = LibraryBook(id: book.id, title: newTitle, createdAt: book.createdAt, source: book.source)
             }
         } catch {
             errorMessage = Loc.t("error_generic")

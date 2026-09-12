@@ -74,6 +74,9 @@ struct AdminDashboardView: View {
             // مدرستي: اختصار الموقع الرسمي + أدوات ذكيّ المستقلة - بدون قيد
             // دور، متاحة حتى لحساب الأدمن العام
             Section {
+                NavigationLink { AdminCurriculumPathsView() } label: {
+                    DashboardMenuRow(icon: "books.vertical.fill", tint: .indigo, title: "مسارات الكتب المدرسية")
+                }
                 NavigationLink { MadrasatiHubView() } label: {
                     DashboardMenuRow(icon: "graduationcap.fill", tint: .brown, title: Loc.t("nav_madrasati"))
                 }
