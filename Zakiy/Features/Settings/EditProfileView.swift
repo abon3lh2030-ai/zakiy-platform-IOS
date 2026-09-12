@@ -35,8 +35,12 @@ struct EditProfileView: View {
             }
 
             Section(Loc.t("password")) {
-                SecureField(Loc.t("new_password"), text: $newPassword)
-                    .textContentType(.newPassword)
+                PasswordEntryField(
+                    title: Loc.t("new_password"),
+                    text: $newPassword,
+                    isNewPassword: true,
+                    accessibilityIdentifier: "settings_new_password_field"
+                )
 
                 Button {
                     Task { await savePassword() }

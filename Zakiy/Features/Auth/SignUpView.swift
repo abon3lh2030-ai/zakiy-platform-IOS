@@ -22,9 +22,12 @@ struct SignUpView: View {
                         .textInputAutocapitalization(.never)
                         .keyboardType(.emailAddress)
                         .accessibilityIdentifier("signup_email_field")
-                    SecureField(Loc.t("password"), text: $password)
-                        .textContentType(.newPassword)
-                        .accessibilityIdentifier("signup_password_field")
+                    PasswordEntryField(
+                        title: Loc.t("password"),
+                        text: $password,
+                        isNewPassword: true,
+                        accessibilityIdentifier: "signup_password_field"
+                    )
                     TextField(Loc.t("education_level"), text: $educationLevel)
                         .accessibilityIdentifier("signup_education_level_field")
                     TextField(Loc.t("proficiency_level"), text: $proficiencyLevel)

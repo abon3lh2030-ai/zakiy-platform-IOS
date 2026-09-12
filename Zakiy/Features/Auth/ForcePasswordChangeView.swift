@@ -24,12 +24,18 @@ struct ForcePasswordChangeView: View {
                         .foregroundStyle(.secondary)
                 }
                 Section {
-                    SecureField(Loc.t("new_password"), text: $newPassword)
-                        .textContentType(.newPassword)
-                        .accessibilityIdentifier("force_pw_new_password_field")
-                    SecureField(Loc.t("confirm_password"), text: $confirmPassword)
-                        .textContentType(.newPassword)
-                        .accessibilityIdentifier("force_pw_confirm_password_field")
+                    PasswordEntryField(
+                        title: Loc.t("new_password"),
+                        text: $newPassword,
+                        isNewPassword: true,
+                        accessibilityIdentifier: "force_pw_new_password_field"
+                    )
+                    PasswordEntryField(
+                        title: Loc.t("confirm_password"),
+                        text: $confirmPassword,
+                        isNewPassword: true,
+                        accessibilityIdentifier: "force_pw_confirm_password_field"
+                    )
                 }
                 if newPassword.count > 0, newPassword.count < 6 {
                     Text(Loc.t("err_password_min")).font(.footnote).foregroundStyle(.red)

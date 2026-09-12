@@ -19,9 +19,11 @@ struct LoginView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .accessibilityIdentifier("login_identifier_field")
-                    SecureField(Loc.t("password"), text: $password)
-                        .textContentType(.password)
-                        .accessibilityIdentifier("login_password_field")
+                    PasswordEntryField(
+                        title: Loc.t("password"),
+                        text: $password,
+                        accessibilityIdentifier: "login_password_field"
+                    )
                 }
                 if let errorMessage {
                     Text(errorMessage).foregroundStyle(.red).font(.footnote)
