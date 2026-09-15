@@ -28,6 +28,7 @@ struct BioCategoryGridView: View {
                             BioCategoryCard(category: category)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("biologyCategory_\(category.id)")
                     }
                 }
             }

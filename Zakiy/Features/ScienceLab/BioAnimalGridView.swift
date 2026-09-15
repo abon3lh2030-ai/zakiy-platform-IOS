@@ -23,6 +23,7 @@ struct BioAnimalGridView: View {
                             BioAnimalCard(animal: animal)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("biologyAnimal_\(animalId)")
                     }
                 }
             }

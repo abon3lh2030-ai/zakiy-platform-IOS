@@ -44,7 +44,7 @@ struct BodyHotspotImageView: View {
                 .clipped()
             }
             .aspectRatio(data.displayAspectRatio, contentMode: .fit)
-            .background(Color.appCard, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .background(Color.white, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .animation(.easeInOut(duration: 0.3), value: activeHotspot)
 

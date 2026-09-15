@@ -32,10 +32,13 @@ enum EmbeddedWebTarget {
     var jsEntryCall: String {
         """
         (function(){try{
-          if (typeof \(functionName) === 'function') { \(functionName)(); }
-          if (typeof hide === 'function') { hide('mode-select'); }
           var el = document.getElementById('\(elementID)');
-          if (el) { el.scrollIntoView({block:'start'}); }
+          if ((!el || el.classList.contains('hidden')) && typeof \(functionName) === 'function') {
+            \(functionName)();
+            el = document.getElementById('\(elementID)');
+            if (el) { el.scrollIntoView({block:'start'}); }
+          }
+          if (typeof hide === 'function') { hide('mode-select'); }
         }catch(e){}})();
         """
     }
@@ -90,6 +93,8 @@ private struct EmbeddedWebViewRepresentable: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         let controller = WKUserContentController()
+        config.setURLSchemeHandler(BiologyImageSchemeHandler(), forURLScheme: BiologyImageSchemeHandler.scheme)
+        controller.addUserScript(WKUserScript(source: BiologyImageSchemeHandler.injectionScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
         if let script = EmbeddedWebAuthBridge.injectionScript() {
             controller.addUserScript(WKUserScript(source: script, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         }

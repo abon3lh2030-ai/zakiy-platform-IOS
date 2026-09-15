@@ -17,11 +17,12 @@ struct BioAnimalDetailView: View {
             VStack(alignment: .leading, spacing: 18) {
                 header
 
+                // التجربة التفاعلية أولًا؛ الحقائق الطويلة لا تدفع الصورة خارج الشاشة.
+                BodyHotspotImageView(data: bodyImageData, session: session)
+
                 if case .animal(let animalId) = kind, let animal = ScienceLabBioData.animals[animalId] {
                     factsList(animal)
                 }
-
-                BodyHotspotImageView(data: bodyImageData, session: session)
             }
             .padding()
         }
