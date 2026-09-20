@@ -421,6 +421,14 @@ final class APIClient {
         return result.email
     }
 
+    func ensurePasswordResetAllowed(email: String) async throws {
+        var request = URLRequest(url: APIConfig.apiBase.appendingPathComponent("/api/auth/password-reset/eligibility"))
+        request.httpMethod = "POST"
+        jsonBody(&request, ["email": email])
+        struct Response: Decodable { let allowed: Bool }
+        let _: Response = try await send(request)
+    }
+
     // ---- Admin ----
 
     func adminCurriculumPaths() async throws -> [CurriculumPath] {

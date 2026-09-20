@@ -8,6 +8,11 @@ struct LoginView: View {
     @State private var password = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var showForgotPassword = false
+    @State private var isResetFormVisible = false
+    @State private var resetEmail = ""
+    @State private var resetMessage: String?
+    @State private var isSendingReset = false
 
     var body: some View {
         NavigationStack {
@@ -28,6 +33,22 @@ struct LoginView: View {
                 if let errorMessage {
                     Text(errorMessage).foregroundStyle(.red).font(.footnote)
                         .accessibilityIdentifier("login_error_message")
+                }
+                if showForgotPassword {
+                    Section {
+                        Button(Loc.t("forgot_password")) {
+                            resetEmail = identifier.contains("@") ? identifier : ""
+                            resetMessage = nil
+                            isResetFormVisible = true
+                        }
+                        if isResetFormVisible {
+                            TextField(Loc.t("email"), text: $resetEmail)
+                                .textInputAutocapitalization(.never).keyboardType(.emailAddress)
+                            Button(Loc.t("send_reset_link")) { Task { await sendResetLink() } }
+                                .disabled(isSendingReset || !resetEmail.contains("@"))
+                            if let resetMessage { Text(resetMessage).font(.footnote).foregroundStyle(.secondary) }
+                        }
+                    }
                 }
                 Section {
                     Button {
@@ -61,7 +82,19 @@ struct LoginView: View {
             dismiss()
         } catch {
             errorMessage = Loc.t("err_wrong_credentials")
+            showForgotPassword = true
         }
         isLoading = false
+    }
+
+    private func sendResetLink() async {
+        isSendingReset = true
+        do {
+            try await auth.requestPasswordReset(email: resetEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased())
+            resetMessage = Loc.t("reset_link_sent")
+        } catch {
+            resetMessage = error.localizedDescription
+        }
+        isSendingReset = false
     }
 }

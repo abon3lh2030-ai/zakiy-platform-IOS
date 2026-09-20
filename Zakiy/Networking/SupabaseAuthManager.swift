@@ -162,6 +162,17 @@ final class SupabaseAuthManager {
     func updatePassword(_ newPassword: String) async throws {
         _ = try await client.auth.update(user: UserAttributes(password: newPassword))
     }
+
+    func updatePassword(currentPassword: String, newPassword: String) async throws {
+        guard let email, !email.isEmpty else { throw APIError.invalidResponse }
+        session = try await client.auth.signIn(email: email, password: currentPassword)
+        _ = try await client.auth.update(user: UserAttributes(password: newPassword))
+    }
+
+    func requestPasswordReset(email: String) async throws {
+        try await APIClient.shared.ensurePasswordResetAllowed(email: email)
+        try await client.auth.resetPasswordForEmail(email, redirectTo: URL(string: "https://zakiy.tech"))
+    }
 }
 
 /// تخزين جلسة بالذاكرة فقط - يُستخدم حصرًا عند تشغيل اختبارات الواجهة

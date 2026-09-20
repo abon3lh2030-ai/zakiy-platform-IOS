@@ -6,6 +6,8 @@ struct EditProfileView: View {
     @State private var username = ""
     @State private var phone = ""
     @State private var newPassword = ""
+    @State private var currentPassword = ""
+    @State private var confirmPassword = ""
     @State private var isSavingProfile = false
     @State private var isSavingPassword = false
     @State private var profileMessage: String?
@@ -35,12 +37,14 @@ struct EditProfileView: View {
             }
 
             Section(Loc.t("password")) {
+                PasswordEntryField(title: Loc.t("current_password"), text: $currentPassword, accessibilityIdentifier: "settings_current_password_field")
                 PasswordEntryField(
                     title: Loc.t("new_password"),
                     text: $newPassword,
                     isNewPassword: true,
                     accessibilityIdentifier: "settings_new_password_field"
                 )
+                PasswordEntryField(title: Loc.t("confirm_password"), text: $confirmPassword, isNewPassword: true, accessibilityIdentifier: "settings_confirm_password_field")
 
                 Button {
                     Task { await savePassword() }
@@ -51,7 +55,7 @@ struct EditProfileView: View {
                         Text(Loc.t("update_password")).frame(maxWidth: .infinity)
                     }
                 }
-                .disabled(isSavingPassword || newPassword.count < 6)
+                .disabled(isSavingPassword || currentPassword.isEmpty || newPassword.count < 6 || newPassword != confirmPassword)
 
                 if let passwordMessage {
                     Text(passwordMessage).font(.footnote).foregroundStyle(.secondary)
@@ -81,11 +85,13 @@ struct EditProfileView: View {
         isSavingPassword = true
         passwordMessage = nil
         do {
-            try await auth.updatePassword(newPassword)
+            try await auth.updatePassword(currentPassword: currentPassword, newPassword: newPassword)
+            currentPassword = ""
             newPassword = ""
+            confirmPassword = ""
             passwordMessage = Loc.t("password_updated")
         } catch {
-            passwordMessage = Loc.t("error_generic")
+            passwordMessage = Loc.t("current_password_wrong")
         }
         isSavingPassword = false
     }
