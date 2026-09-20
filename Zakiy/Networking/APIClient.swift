@@ -83,6 +83,28 @@ final class APIClient {
         return result.text
     }
 
+    func recognizeHandwriting(data: Data, filename: String, mimeType: String, context: String, lang: String) async throws -> String {
+        var request = authorizedRequest("/api/handwriting/recognize", method: "POST")
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        var body = Data()
+        func appendField(_ name: String, _ value: String) {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n".data(using: .utf8)!)
+        }
+        appendField("lang", lang)
+        appendField("context", context)
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(data)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        request.httpBody = body
+        struct Response: Decodable { let text: String }
+        let result: Response = try await send(request)
+        return result.text
+    }
+
     func summarize(text: String, lang: String) async throws -> String {
         var request = authorizedRequest("/api/summarize", method: "POST")
         jsonBody(&request, ["text": text, "lang": lang])

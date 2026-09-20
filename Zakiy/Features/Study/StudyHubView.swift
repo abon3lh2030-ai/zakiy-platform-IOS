@@ -4,6 +4,9 @@ struct StudyHubView: View {
     let sourceText: String
 
     @State private var generatedSummary: String?
+    @State private var showHandwriting = false
+    @State private var recognizedSourceText = ""
+    @State private var openRecognizedStudy = false
 
     var body: some View {
         ScrollView {
@@ -15,6 +18,15 @@ struct StudyHubView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("studySummaryOption")
+
+                Button { showHandwriting = true } label: {
+                    StudyOptionCard(icon: "pencil.and.scribble", title: Loc.t("handwriting_solo"), subtitle: Loc.t("handwriting_solo_subtitle"))
+                }
+                .buttonStyle(.plain)
+
+                NavigationLink(isActive: $openRecognizedStudy) {
+                    StudyHubView(sourceText: recognizedSourceText)
+                } label: { EmptyView() }
 
                 NavigationLink {
                     ChatAssistantView(sourceText: sourceText)
@@ -35,6 +47,12 @@ struct StudyHubView: View {
         .background(Color.appBackground)
         .navigationTitle(Loc.t("study"))
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showHandwriting) {
+            HandwritingRecognitionSheet(context: "solo") { text in
+                recognizedSourceText = text
+                openRecognizedStudy = true
+            }
+        }
     }
 }
 

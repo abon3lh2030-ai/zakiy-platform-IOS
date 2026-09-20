@@ -19,6 +19,14 @@ struct SubscriptionView: View {
                 .padding(.horizontal)
                 .padding(.top, 12)
 
+                if store.currentTier == .free {
+                    Text(Loc.t("plan_free_description"))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+                }
+
                 Picker(Loc.t("billing_period"), selection: $billingPeriod) {
                     Text(Loc.t("monthly_label")).tag(BillingPeriod.monthly)
                     Text(Loc.t("yearly_label")).tag(BillingPeriod.yearly)

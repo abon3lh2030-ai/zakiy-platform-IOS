@@ -12,6 +12,7 @@ struct HomeView: View {
     @State private var errorMessage: String?
     @State private var extractedText: ExtractedText?
     @State private var showPaywall = false
+    @State private var showHandwriting = false
 
     private var displayName: String {
         if auth.isAuthenticated { return auth.username }
@@ -47,6 +48,23 @@ struct HomeView: View {
                         )
                         .presentationDetents([.height(240)])
                     }
+
+                    Button {
+                        if UsageLimiter.shared.canPerform(.soloSession) {
+                            showHandwriting = true
+                        } else {
+                            showPaywall = true
+                        }
+                    } label: {
+                        HomeActionCard(
+                            icon: "pencil.and.scribble",
+                            tint: .accentColor,
+                            title: Loc.t("handwriting_title"),
+                            subtitle: Loc.t("handwriting_solo_subtitle")
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isProcessing)
 
                     if isProcessing {
                         HStack(spacing: 8) {
@@ -110,6 +128,12 @@ struct HomeView: View {
             LibraryPickerView { detail in
                 UsageLimiter.shared.recordUsage(.soloSession)
                 extractedText = ExtractedText(value: detail.extractedText)
+            }
+        }
+        .sheet(isPresented: $showHandwriting) {
+            HandwritingRecognitionSheet(context: "solo") { text in
+                UsageLimiter.shared.recordUsage(.soloSession)
+                extractedText = ExtractedText(value: text)
             }
         }
         .navigationDestination(item: $extractedText) { text in

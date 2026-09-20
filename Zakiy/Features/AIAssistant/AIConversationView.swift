@@ -17,6 +17,7 @@ struct AIConversationView: View {
     @State private var isSending = false
     @State private var errorMessage: String?
     @State private var showBookPicker = false
+    @State private var showHandwriting = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -66,6 +67,13 @@ struct AIConversationView: View {
                         .foregroundStyle(Color.accentColor)
                 }
 
+                Button { showHandwriting = true } label: {
+                    Image(systemName: "pencil.and.scribble")
+                        .font(.title3)
+                        .foregroundStyle(Color.accentColor)
+                }
+                .accessibilityLabel(Loc.t("handwriting_title"))
+
                 TextField(Loc.t("ai_message_placeholder"), text: $input, axis: .vertical)
                     .lineLimit(1...4)
                     .textFieldStyle(.roundedBorder)
@@ -90,6 +98,18 @@ struct AIConversationView: View {
             AIBookPickerView { bookTitle, bookText in
                 showBookPicker = false
                 Task { await sendBookSummary(title: bookTitle, text: bookText) }
+            }
+        }
+        .sheet(isPresented: $showHandwriting) {
+            HandwritingRecognitionSheet(context: "chat") { text in
+                Task {
+                    await send(
+                        displayText: "✍️ \(Loc.t("handwriting_from_file"))",
+                        content: "\(Loc.t("handwriting_chat_context"))\n\n\(text)",
+                        bookTitle: nil,
+                        bookText: nil
+                    )
+                }
             }
         }
     }

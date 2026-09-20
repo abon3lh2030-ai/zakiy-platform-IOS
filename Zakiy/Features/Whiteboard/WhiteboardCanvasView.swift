@@ -16,6 +16,7 @@ struct WhiteboardCanvasView: View {
     @State private var tool: WhiteboardTool = .pen
     @State private var pendingTextLocation: CGPoint?
     @State private var newText = ""
+    @State private var showHandwriting = false
 
     private var canDraw: Bool { socket.roomState.isHost || socket.roomState.canManageContent }
 
@@ -66,6 +67,9 @@ struct WhiteboardCanvasView: View {
             Button(Loc.t("cancel"), role: .cancel) { newText = ""; pendingTextLocation = nil }
             Button(Loc.t("add")) { placeText() }
                 .disabled(newText.trimmingCharacters(in: .whitespaces).isEmpty)
+        }
+        .sheet(isPresented: $showHandwriting) {
+            HandwritingRecognitionSheet(context: "board") { addRecognizedText($0) }
         }
     }
 
@@ -119,6 +123,12 @@ struct WhiteboardCanvasView: View {
                 toolButton(.pen, systemImage: "pencil")
                 toolButton(.eraser, systemImage: "eraser")
                 toolButton(.text, systemImage: "textformat")
+                Button { showHandwriting = true } label: {
+                    Image(systemName: "pencil.and.scribble")
+                        .font(.system(size: 18))
+                        .frame(width: 36, height: 36)
+                }
+                .accessibilityLabel(Loc.t("handwriting_title"))
 
                 Divider().frame(height: 26)
 
@@ -144,6 +154,16 @@ struct WhiteboardCanvasView: View {
             .padding(.vertical, 14)
         }
         .background(Color.appCard)
+    }
+
+    private func addRecognizedText(_ text: String) {
+        let lines = text.split(whereSeparator: { $0.isNewline }).map(String.init).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        for (index, line) in lines.prefix(24).enumerated() {
+            socket.sendBoardStroke(BoardStroke(
+                mode: "text", color: selectedColor.hexString,
+                text: String(line.prefix(180)), x: 55, y: Double(42 + index * 27), fontSize: 20
+            ))
+        }
     }
 
     private func toolButton(_ candidate: WhiteboardTool, systemImage: String) -> some View {
