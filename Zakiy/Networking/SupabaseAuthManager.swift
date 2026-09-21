@@ -171,7 +171,7 @@ final class SupabaseAuthManager {
 
     func requestPasswordReset(email: String) async throws {
         try await APIClient.shared.ensurePasswordResetAllowed(email: email)
-        try await client.auth.resetPasswordForEmail(email, redirectTo: URL(string: "https://zakiy.tech"))
+        try await client.auth.resetPasswordForEmail(email, redirectTo: URL(string: "https://zakiy.tech/?password_recovery=1"))
     }
 }
 
