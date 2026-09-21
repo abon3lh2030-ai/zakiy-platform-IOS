@@ -53,6 +53,12 @@ struct RootView: View {
             await WidgetDataStore.refresh()
             NotificationSocketManager.shared.connectIfNeeded()
             await NotificationSocketManager.shared.refreshUnreadCount()
+            // يبقي "نشطون الآن" في لوحة الأدمن دقيقًا طوال استخدام التطبيق،
+            // وليس فقط في لحظة تسجيل الدخول.
+            while !Task.isCancelled && auth.isAuthenticated {
+                try? await Task.sleep(for: .seconds(300))
+                try? await APIClient.shared.pingActive()
+            }
         }
         .task {
             // الجدولة تتفعّل/تنتهي بدون حاجة المستخدم يقفل التطبيق ويفتحه.
