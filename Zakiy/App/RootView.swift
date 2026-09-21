@@ -22,9 +22,8 @@ struct RootView: View {
             } else if auth.isAuthenticated, let role = auth.role, let accountRole = AccountRole(rawValue: role) {
                 RoleRoutedView(role: accountRole)
                     .transition(.opacity)
-            } else if auth.isAuthenticated || settings.isGuest {
-                // حساب فردي عادي (role == nil) أو ضيف - نفس تجربة التطبيق
-                // الحالية بدون أي تغيير
+            } else if auth.isAuthenticated {
+                // حساب فردي عادي (role == nil). لا يوجد دخول للمنصة كضيف.
                 MainTabView()
                     .transition(.opacity)
             } else {
@@ -33,7 +32,6 @@ struct RootView: View {
             }
         }
         .animation(.default, value: auth.isAuthenticated)
-        .animation(.default, value: settings.isGuest)
         .animation(.default, value: auth.isBootstrapping)
         .animation(.default, value: auth.didLoadRole)
         .animation(.default, value: auth.mustChangePassword)

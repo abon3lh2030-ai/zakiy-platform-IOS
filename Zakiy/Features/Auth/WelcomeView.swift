@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct WelcomeView: View {
-    @Environment(AppSettings.self) private var settings
     @State private var showLogin = false
     @State private var showSignUp = false
 
@@ -42,13 +41,6 @@ struct WelcomeView: View {
                     .controlSize(.large)
                     .accessibilityIdentifier("welcome_login_button")
 
-                    Button(Loc.t("continue_guest")) {
-                        withAnimation { settings.isGuest = true }
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 4)
-                    .accessibilityIdentifier("welcome_continue_guest_button")
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 32)

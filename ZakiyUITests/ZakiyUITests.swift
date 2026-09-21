@@ -66,7 +66,7 @@ final class ZakiyUITests: XCTestCase {
 
         XCTAssertTrue(app.buttons["welcome_signup_button"].waitForExistence(timeout: 15))
         XCTAssertTrue(app.buttons["welcome_login_button"].exists)
-        XCTAssertTrue(app.buttons["welcome_continue_guest_button"].exists)
+        XCTAssertFalse(app.buttons["welcome_continue_guest_button"].exists)
     }
 
     func test02_LoginSheetOpensAndCancelReturnsToWelcome() throws {
@@ -128,30 +128,15 @@ final class ZakiyUITests: XCTestCase {
         attach(app, name: "04_login_wrong_credentials_error")
     }
 
-    // MARK: - وضع الضيف (guest) - التبويبات الأساسية
+    // MARK: - الدخول للحساب إلزامي
 
-    func test05_GuestModeReachesMainTabsAndEachTabLoads() throws {
+    func test05_GuestModeIsUnavailable() throws {
         let app = launchedApp()
-        let guestButton = app.buttons["welcome_continue_guest_button"]
-        XCTAssertTrue(guestButton.waitForExistence(timeout: 15))
-        guestButton.tap()
-
-        let tabBar = app.tabBars.firstMatch
-        XCTAssertTrue(tabBar.waitForExistence(timeout: 15), "guest mode should land on the main tab bar")
-        attach(app, name: "05_guest_main_tabs")
-
-        // اضغط كل تبويب متاح وتأكد ما فيه كراش أو تعليق
-        let tabButtons = tabBar.buttons
-        let count = tabButtons.count
-        for i in 0..<count {
-            let button = tabButtons.element(boundBy: i)
-            if button.exists && button.isHittable {
-                button.tap()
-                _ = app.wait(for: .runningForeground, timeout: 3)
-                attach(app, name: "05_guest_tab_\(i)_\(button.label)")
-                XCTAssertEqual(app.state, .runningForeground, "app crashed or backgrounded after tapping tab \(i): \(button.label)")
-            }
-        }
+        XCTAssertTrue(app.buttons["welcome_login_button"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["welcome_signup_button"].exists)
+        XCTAssertFalse(app.buttons["welcome_continue_guest_button"].exists)
+        XCTAssertFalse(app.tabBars.firstMatch.exists, "main tabs must stay locked until authentication")
+        attach(app, name: "05_authentication_required")
     }
 
     // MARK: - حساب فردي حقيقي - معمل الروبوتات ومختبر العلوم
@@ -353,47 +338,14 @@ final class ZakiyUITests: XCTestCase {
         }
     }
 
-    // MARK: - غير مسجّل دخول: RoomLobbyView "تسجيل الدخول" (خلل تعشيش NavigationStack مصحّح)
+    // MARK: - غير مسجّل دخول: لا يصل إلى الغرف أو بقية المنصة
 
-    /// كانت `RoomLobbyView.loginRequiredView` تدفع `LoginView` (نفسه NavigationStack)
-    /// بـ NavigationLink فوق NavigationStack الحالي - تعشيش غير صحيح (نفس فئة خلل
-    /// "زر الرجوع يرجع بعيد" الموثّقة بالمشروع). صحّحناها لتقديمها كـ sheet بدل
-    /// دفعها - هذا الاختبار يتأكد الرجوع من شاشة الدخول (بزر الإلغاء) يرجّع بالضبط
-    /// لـ RoomLobbyView (مو لبرّه ولا معلّق)، وهذا مسار يوصله أي دور (بما فيه ضيف).
-    func test08_RoomLobbyLoginPromptOpensAsSheetAndCancelReturnsToLobby() throws {
+    func test08_UnauthenticatedUserStaysAtWelcome() throws {
         let app = launchedApp()
-        let guestButton = app.buttons["welcome_continue_guest_button"]
-        XCTAssertTrue(guestButton.waitForExistence(timeout: 15))
-        guestButton.tap()
-
-        let tabBar = app.tabBars.firstMatch
-        XCTAssertTrue(tabBar.waitForExistence(timeout: 15))
-        tabBar.buttons["Rooms"].tap()
-
-        let groupRoomRow = app.descendants(matching: .any)["rooms_hub_group_room_row"]
-        XCTAssertTrue(groupRoomRow.waitForExistence(timeout: 10))
-        groupRoomRow.tap()
-
-        let loginButton = app.buttons["room_lobby_login_button"]
-        XCTAssertTrue(loginButton.waitForExistence(timeout: 10), "unauthenticated user opening a room should see the login-required prompt")
-        attach(app, name: "08_room_lobby_login_required")
-        loginButton.tap()
-
-        // لو كانت لسه NavigationLink (خلل قديم)، هذا الحقل برضو بيظهر - الفرق
-        // الحقيقي يظهر بعد الإلغاء تحت
-        let identifierField = app.textFields["login_identifier_field"]
-        XCTAssertTrue(identifierField.waitForExistence(timeout: 5), "login sheet should present the identifier field")
-        attach(app, name: "08_login_sheet_over_lobby")
-
-        let cancelButtons = app.navigationBars.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'cancel'"))
-        XCTAssertTrue(cancelButtons.count > 0, "login sheet should have a cancel button")
-        cancelButtons.element(boundBy: 0).tap()
-
-        // لازم نرجع بالضبط لـ RoomLobbyView (زر تسجيل الدخول لسه موجود)، مو نطلع
-        // للخلف أكثر (لـ RoomsHubView) ولا نعلق بشاشة الدخول
-        XCTAssertTrue(loginButton.waitForExistence(timeout: 5), "cancelling login must return to RoomLobbyView exactly, not pop further or strand the user")
-        attach(app, name: "08_back_at_room_lobby_after_cancel")
-        XCTAssertEqual(app.state, .runningForeground)
+        XCTAssertTrue(app.buttons["welcome_login_button"].waitForExistence(timeout: 15))
+        XCTAssertFalse(app.tabBars.firstMatch.exists)
+        XCTAssertFalse(app.descendants(matching: .any)["rooms_hub_group_room_row"].exists)
+        attach(app, name: "08_unauthenticated_locked")
     }
 
     // MARK: - حسابات مؤسسية حقيقية (مدرسة/معلم/طالب) - دخول + بوابة تغيير كلمة السر
